@@ -1,40 +1,144 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, SafeAreaView, Platform, ScrollView, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, SafeAreaView, Platform, ScrollView, Text, TouchableOpacity, Alert, KeyboardAvoidingView } from 'react-native';
 import Header from '../sections/Header';
 import GoogleButton from '../components/GoogleButton';
 import UserAuthFields from '../sections/UserAuthFields';
 import ContinueButton from '../components/ContinueButton';
+import { signUp } from '../functions/authentication';
+import { saveSession } from '../../services/session';
+import { supabase } from '../services/supabaseClient';
 
-export default function SignupScreen({ onSignup, onSwitchToLogin }: { onSignup?: () => void; onSwitchToLogin?: () => void }) {
+export default function SignupScreen({ onSignup, onSwitchToLogin, onboardingData }: { onSignup?: () => void; onSwitchToLogin?: () => void; onboardingData: any }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleAuthChange = (newEmail: string, newPassword: string) => {
     setEmail(newEmail);
     setPassword(newPassword);
   };
 
-  const canLogin = email.trim().length > 0 && password.length > 0;
+  const canSignup = email.trim().length > 0 && password.length > 0;
+
+  const handleSignup = async () => {
+    setLoading(true);
+    try {
+      const { error, data } = await signUp(email, password);
+      if (error) {
+        Alert.alert('Sign Up Error', error.message);
+      } else {
+        let userId = null;
+        if (data && data.session) {
+          await saveSession(data.session);
+          userId = data.session.user.id;
+        } else if (data && data.user) {
+          userId = data.user.id;
+        }
+        if (userId) {
+          console.log('Signup userId:', userId);
+          console.log('Onboarding data:', onboardingData);
+          // Demographics
+          const { error: demoError } = await supabase.from('demographics').upsert({
+            uid: userId,
+            where_from: onboardingData?.aboutAnswers?.source || null,
+            financial_goal: onboardingData?.aboutAnswers?.goal || null,
+          });
+          if (demoError) {
+            console.error('DEMOGRAPHICS error:', demoError);
+            Alert.alert('DB Error', 'DEMOGRAPHICS: ' + demoError.message);
+          }
+          // Savings Info
+          const { error: savingsError } = await supabase.from('savings_info').upsert({
+            uid: userId,
+            goal_title: onboardingData?.selectedGoal || onboardingData?.customGoal || null,
+            goal_amount: onboardingData?.customAmount ? parseFloat(onboardingData.customAmount) : null,
+          });
+          if (savingsError) {
+            console.error('SAVINGS_INFO error:', savingsError);
+            Alert.alert('DB Error', 'SAVINGS_INFO: ' + savingsError.message);
+          }
+          // Accounts
+          const { error: accountsError } = await supabase.from('accounts').upsert({
+            uid: userId,
+            cash: null,
+            savings: null,
+            credit: null,
+          });
+          if (accountsError) {
+            console.error('ACCOUNTS error:', accountsError);
+            Alert.alert('DB Error', 'ACCOUNTS: ' + accountsError.message);
+          }
+          // User Balance
+          const { error: balanceError } = await supabase.from('user_balance').upsert({
+            uid: userId,
+            total_balance: null,
+          });
+          if (balanceError) {
+            console.error('USER_BALANCE error:', balanceError);
+            Alert.alert('DB Error', 'USER_BALANCE: ' + balanceError.message);
+          }
+          // Recommendations
+          const { error: recError } = await supabase.from('recommendations').upsert({
+            uid: userId,
+            title: null,
+            description: null,
+            useful: null,
+            date: null,
+          });
+          if (recError) {
+            console.error('RECOMMENDATIONS error:', recError);
+            Alert.alert('DB Error', 'RECOMMENDATIONS: ' + recError.message);
+          }
+          // Transactions
+          const { error: txError } = await supabase.from('transactions').upsert({
+            uid: userId,
+            category: null,
+            type: null,
+            title: null,
+            account: null,
+            amount: null,
+            date: null,
+          });
+          if (txError) {
+            console.error('TRANSACTIONS error:', txError);
+            Alert.alert('DB Error', 'TRANSACTIONS: ' + txError.message);
+          }
+        }
+        Alert.alert('Success', 'Account created! Please check your email to confirm.');
+        if (onSignup) onSignup();
+      }
+    } catch (err: any) {
+      Alert.alert('Sign Up Error', err.message || 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Header
-          title="Create Account"
-          subtitle="Join thousands of users taking control of ther finances"
-        />
-        <GoogleButton />
-        <UserAuthFields onChange={handleAuthChange} />
-        <ContinueButton onPress={onSignup || (() => {})} disabled={!canLogin}>
-          Create Account
-        </ContinueButton>
-        <View style={styles.loginTextContainer}>
-          <Text style={styles.loginText}>Already have an account? </Text>
-          <TouchableOpacity onPress={onSwitchToLogin}>
-            <Text style={styles.loginButton}>Login</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 25}
+      >
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <Header
+            title="Create Account"
+            subtitle="Join thousands of users taking control of ther finances"
+          />
+          <GoogleButton />
+          <UserAuthFields onChange={handleAuthChange} />
+          <ContinueButton onPress={handleSignup} disabled={!canSignup || loading}>
+            {loading ? 'Creating...' : 'Create Account'}
+          </ContinueButton>
+          <View style={styles.loginTextContainer}>
+            <Text style={styles.loginText}>Already have an account? </Text>
+            <TouchableOpacity onPress={onSwitchToLogin}>
+              <Text style={styles.loginButton}>Login</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -29,14 +29,9 @@ const questions = [
   }
 ];
 
-export default function AboutUserScreen({ onContinue }: { onContinue: () => void }) {
-  const [answers, setAnswers] = useState<{ [key: string]: string | null }>({
-    source: null,
-    goal: null,
-  });
-
+export default function AboutUserScreen({ onContinue, answers, setAnswers }: { onContinue: () => void; answers: { [key: string]: string | null }; setAnswers: (a: { [key: string]: string | null }) => void; }) {
   const handleSelect = (questionId: string, optionId: string) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
+    setAnswers((prev: any) => ({ ...prev, [questionId]: optionId }));
   };
 
   const canContinue = Object.values(answers).every((val) => !!val);

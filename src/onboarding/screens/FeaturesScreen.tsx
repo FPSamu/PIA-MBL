@@ -5,11 +5,13 @@ import ContinueButton from '../components/ContinueButton';
 import Features from '../sections/Features';
 import ProgressBar from '../components/ProgressBar';
 
-interface WelcomeProps {
+interface FeaturesScreenProps {
   onContinue: () => void;
+  selectedFeature: string | null;
+  setSelectedFeature: (feature: string | null) => void;
 }
 
-export default function FeaturesScreen({ onContinue }: WelcomeProps) {
+export default function FeaturesScreen({ onContinue, selectedFeature, setSelectedFeature }: FeaturesScreenProps) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -20,7 +22,7 @@ export default function FeaturesScreen({ onContinue }: WelcomeProps) {
         />
         
         <View style={styles.featuresContainer}>
-          <Features />
+          <Features selectedFeature={selectedFeature} setSelectedFeature={setSelectedFeature} />
         </View>
         
         <ContinueButton onPress={onContinue}>

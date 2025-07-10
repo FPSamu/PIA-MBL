@@ -4,22 +4,26 @@ import { View, TextInput, Text, StyleSheet } from 'react-native';
 interface ManualGoalProps {
   onChange?: (goal: string, amount?: string) => void;
   disabled?: boolean;
+  value?: string;
+  amount?: string;
 }
 
-const ManualGoal: React.FC<ManualGoalProps> = ({ onChange, disabled }) => {
+const ManualGoal: React.FC<ManualGoalProps> = ({ onChange, disabled, value, amount }) => {
   const [goal, setGoal] = useState('');
-  const [amount, setAmount] = useState('');
+  const [localAmount, setLocalAmount] = useState('');
+
+  const goalValue = value !== undefined ? value : goal;
+  const amountValue = amount !== undefined ? amount : localAmount;
 
   const handleGoalChange = (text: string) => {
-    setGoal(text);
-    if (onChange) onChange(text, amount);
+    if (value === undefined) setGoal(text);
+    if (onChange) onChange(text, amountValue);
   };
 
   const handleAmountChange = (text: string) => {
-    // Only allow numbers and decimal
     const sanitized = text.replace(/[^0-9.]/g, '');
-    setAmount(sanitized);
-    if (onChange) onChange(goal, sanitized);
+    if (amount === undefined) setLocalAmount(sanitized);
+    if (onChange) onChange(goalValue, sanitized);
   };
 
   return (
@@ -30,7 +34,7 @@ const ManualGoal: React.FC<ManualGoalProps> = ({ onChange, disabled }) => {
           style={styles.input}
           placeholder="Enter your goal..."
           placeholderTextColor="#cbd5e1"
-          value={goal}
+          value={goalValue}
           onChangeText={handleGoalChange}
           editable={!disabled}
         />
@@ -45,7 +49,7 @@ const ManualGoal: React.FC<ManualGoalProps> = ({ onChange, disabled }) => {
         style={styles.input}
         placeholder="Enter target amount..."
         placeholderTextColor="#cbd5e1"
-        value={amount}
+        value={amountValue}
         onChangeText={handleAmountChange}
         keyboardType="numeric"
         editable={true}
