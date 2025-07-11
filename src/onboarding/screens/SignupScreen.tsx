@@ -60,13 +60,37 @@ export default function SignupScreen({ onSignup, onSwitchToLogin, onboardingData
           // Accounts
           const { error: accountsError } = await supabase.from('accounts').upsert({
             uid: userId,
-            cash: null,
-            savings: null,
-            credit: null,
+            account_name: 'cash',
+            title: 'Cash',
+            balance: null,
           });
+          console.log('Cash account creation result:', { error: accountsError });
           if (accountsError) {
             console.error('ACCOUNTS error:', accountsError);
             Alert.alert('DB Error', 'ACCOUNTS: ' + accountsError.message);
+          }
+          // Add credit_card and savings accounts
+          const { error: creditCardError } = await supabase.from('accounts').upsert({
+            uid: userId,
+            account_name: 'credit_card',
+            title: 'Credit card',
+            balance: null,
+          });
+          console.log('Credit card account creation result:', { error: creditCardError });
+          if (creditCardError) {
+            console.error('CREDIT_CARD error:', creditCardError);
+            Alert.alert('DB Error', 'CREDIT_CARD: ' + creditCardError.message);
+          }
+          const { error: savingsAccountError } = await supabase.from('accounts').upsert({
+            uid: userId,
+            account_name: 'savings',
+            title: 'Savings',
+            balance: null,
+          });
+          console.log('Savings account creation result:', { error: savingsAccountError });
+          if (savingsAccountError) {
+            console.error('SAVINGS_ACCOUNT error:', savingsAccountError);
+            Alert.alert('DB Error', 'SAVINGS_ACCOUNT: ' + savingsAccountError.message);
           }
           // User Balance
           const { error: balanceError } = await supabase.from('user_balance').upsert({
@@ -121,23 +145,23 @@ export default function SignupScreen({ onSignup, onSwitchToLogin, onboardingData
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 25}
       >
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Header
-            title="Create Account"
-            subtitle="Join thousands of users taking control of ther finances"
-          />
-          <GoogleButton />
-          <UserAuthFields onChange={handleAuthChange} />
-          <ContinueButton onPress={handleSignup} disabled={!canSignup || loading}>
-            {loading ? 'Creating...' : 'Create Account'}
-          </ContinueButton>
-          <View style={styles.loginTextContainer}>
-            <Text style={styles.loginText}>Already have an account? </Text>
-            <TouchableOpacity onPress={onSwitchToLogin}>
-              <Text style={styles.loginButton}>Login</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <Header
+          title="Create Account"
+          subtitle="Join thousands of users taking control of ther finances"
+        />
+        <GoogleButton />
+        <UserAuthFields onChange={handleAuthChange} />
+        <ContinueButton onPress={handleSignup} disabled={!canSignup || loading}>
+          {loading ? 'Creating...' : 'Create Account'}
+        </ContinueButton>
+        <View style={styles.loginTextContainer}>
+          <Text style={styles.loginText}>Already have an account? </Text>
+          <TouchableOpacity onPress={onSwitchToLogin}>
+            <Text style={styles.loginButton}>Login</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View } from 'react-native';
-import { useState, useEffect } from 'react';
+import { StyleSheet, View, Modal, Animated, Easing, Platform, Dimensions } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
 import { getSession } from './src/services/session';
 import GetStarted from './src/onboarding/screens/GetStarted';
 import FeaturesScreen from './src/onboarding/screens/FeaturesScreen';
@@ -10,10 +10,16 @@ import SignupScreen from './src/onboarding/screens/SignupScreen';
 import LoginScreen from './src/onboarding/screens/LoginScreen';
 import Dashboard from './src/Dashboard/Dashboard';
 import ProgressBar from './src/onboarding/components/ProgressBar';
+import Navbar from './src/navbar/Navbar';
+import AddTransactionScreen from './src/Transactions/addTransaction/AddTransactionScreen';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('getStarted');
   const [checkingSession, setCheckingSession] = useState(true);
+  const [showAddTransaction, setShowAddTransaction] = useState(false);
+  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
   // Onboarding state
   const [selectedFeature, setSelectedFeature] = useState(null);
@@ -33,29 +39,26 @@ export default function App() {
     checkSession();
   }, []);
 
-  const navigateToFeatures = () => {
-    setCurrentScreen('features');
-  };
+  useEffect(() => {
+    if (showAddTransaction) {
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 350,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: SCREEN_HEIGHT,
+        duration: 300,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [showAddTransaction]);
 
-  const navigateToGoals = () => {
-    setCurrentScreen('goals');
-  };
-
-  const navigateToAbout = () => {
-    setCurrentScreen('about');
-  };
-
-  const navigateToLogin = () => {
-    setCurrentScreen('login');
-  };
-
-  const navigateToSignup = () => {
-    setCurrentScreen('signup');
-  };
-
-  const navigateToDashboard = () => {
-    setCurrentScreen('dashboard');
-  };
+  const handleShowAddTransaction = () => setShowAddTransaction(true);
+  const handleCloseAddTransaction = () => setShowAddTransaction(false);
 
   let content = null;
 
@@ -80,14 +83,51 @@ export default function App() {
   return (
     <View style={styles.container}>
       {content}
+      {currentScreen === 'dashboard' && (
+        <Navbar onAddPress={handleShowAddTransaction} />
+      )}
+      <Modal
+        visible={showAddTransaction}
+        animationType="none"
+        transparent
+        onRequestClose={handleCloseAddTransaction}
+      >
+        <View style={styles.modalOverlay}>
+          <Animated.View style={[styles.animatedModal, { transform: [{ translateY: slideAnim }] }]}> 
+            <AddTransactionScreen onClose={handleCloseAddTransaction} />
+          </Animated.View>
+        </View>
+      </Modal>
       <StatusBar style="light" />
     </View>
   );
+
+  function navigateToFeatures() { setCurrentScreen('features'); }
+  function navigateToGoals() { setCurrentScreen('goals'); }
+  function navigateToAbout() { setCurrentScreen('about'); }
+  function navigateToLogin() { setCurrentScreen('login'); }
+  function navigateToSignup() { setCurrentScreen('signup'); }
+  function navigateToDashboard() { setCurrentScreen('dashboard'); }
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1e3a8a',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    justifyContent: 'flex-end',
+  },
+  animatedModal: {
+    backgroundColor: '#F5F6FA',
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    minHeight: SCREEN_HEIGHT,
+    maxHeight: SCREEN_HEIGHT,
+    width: '100%',
+    height: SCREEN_HEIGHT,
+    overflow: 'hidden',
   },
 });

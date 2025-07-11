@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Button } from 'react-native';
+import { View, StyleSheet, Button, ScrollView, Platform } from 'react-native';
 import { removeSession } from '../services/session';
 import DashboardHeader from './sections/Header';
 import { StatusBar } from 'expo-status-bar';
@@ -15,10 +15,12 @@ export default function Dashboard({ onLogout }: { onLogout?: () => void }) {
   return (
     <View style={styles.container}>
       <StatusBar style="dark" backgroundColor="#000" />
-      <DashboardHeader />
-      <Balance total={"$12,500"} income={"$3,000"} expenses={"-$1,200"} />
-      <Accounts />
-      <Button title="Log Out (Test)" onPress={handleLogout} />
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <DashboardHeader />
+        <Balance total={"$12,500"} income={"$3,000"} expenses={"-$1,200"} />
+        <Accounts />
+        <Button title="Log Out (Test)" onPress={handleLogout} />
+      </ScrollView>
     </View>
   );
 }
@@ -28,5 +30,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FDFCFB',
     paddingTop: 0,
+  },
+  scrollContent: {
+    paddingBottom: Platform.OS === 'ios' ? 100 : 80, // space for navbar
+  },
+  navbar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
 });
