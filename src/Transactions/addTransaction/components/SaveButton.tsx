@@ -4,9 +4,10 @@ import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 interface SaveButtonProps {
   onPress: () => void;
   disabled?: boolean;
+  saving?: boolean;
 }
 
-export default function SaveButton({ onPress, disabled = false }: SaveButtonProps) {
+export default function SaveButton({ onPress, disabled = false, saving = false }: SaveButtonProps) {
   return (
     <TouchableOpacity
       style={[styles.button, disabled && styles.disabledButton]}
@@ -14,7 +15,9 @@ export default function SaveButton({ onPress, disabled = false }: SaveButtonProp
       disabled={disabled}
       activeOpacity={0.8}
     >
-      <Text style={styles.buttonText}>Save Transaction</Text>
+      <Text style={styles.buttonText}>
+        {saving ? 'Saving...' : 'Save Transaction'}
+      </Text>
     </TouchableOpacity>
   );
 }

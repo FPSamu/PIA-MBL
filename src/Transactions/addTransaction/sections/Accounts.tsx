@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Text, View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import Account from '../components/Account';
 import { supabase, getAuthenticatedSupabase } from '../../../onboarding/services/supabaseClient';
-import { getSession } from '../../../services/session';
+import { ensureValidSession } from '../../../services/session';
 
 export default function Accounts({ selected, onSelect }: { selected?: string; onSelect?: (acc: string) => void }) {
   const [accounts, setAccounts] = useState<string[]>([]);
@@ -15,7 +15,7 @@ export default function Accounts({ selected, onSelect }: { selected?: string; on
       setLoading(true);
       setError(null);
       try {
-        const session = await getSession();
+        const session = await ensureValidSession();
         const uid = session?.user?.id;
         if (!uid) {
           setError('No user session found');
@@ -23,9 +23,7 @@ export default function Accounts({ selected, onSelect }: { selected?: string; on
           return;
         }
         
-        // Use authenticated Supabase client
         const authenticatedSupabase = await getAuthenticatedSupabase();
-        
         const { data, error: dbError } = await authenticatedSupabase
           .from('accounts')
           .select('title')
@@ -44,7 +42,7 @@ export default function Accounts({ selected, onSelect }: { selected?: string; on
           if (titles.length === 0) {
             await createDefaultAccounts(uid);
             // Fetch accounts again after creating them
-            const { data: newData, error: newError } = await supabase
+            const { data: newData, error: newError } = await authenticatedSupabase
               .from('accounts')
               .select('title')
               .eq('uid', uid);

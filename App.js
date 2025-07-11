@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, Modal, Animated, Easing, Platform, Dimensions } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
-import { getSession } from './src/services/session';
+import { getSession, ensureValidSession, initializeSessionListener } from './src/services/session';
 import GetStarted from './src/onboarding/screens/GetStarted';
 import FeaturesScreen from './src/onboarding/screens/FeaturesScreen';
 import GoalsScreen from './src/onboarding/screens/GoalsScreen';
@@ -29,8 +29,11 @@ export default function App() {
   const [aboutAnswers, setAboutAnswers] = useState({ source: null, goal: null });
 
   useEffect(() => {
+    // Initialize session listener for automatic refresh
+    initializeSessionListener();
+    
     const checkSession = async () => {
-      const session = await getSession();
+      const session = await ensureValidSession();
       if (session) {
         setCurrentScreen('dashboard');
       }

@@ -101,32 +101,6 @@ export default function SignupScreen({ onSignup, onSwitchToLogin, onboardingData
             console.error('USER_BALANCE error:', balanceError);
             Alert.alert('DB Error', 'USER_BALANCE: ' + balanceError.message);
           }
-          // Recommendations
-          const { error: recError } = await supabase.from('recommendations').upsert({
-            uid: userId,
-            title: null,
-            description: null,
-            useful: null,
-            date: null,
-          });
-          if (recError) {
-            console.error('RECOMMENDATIONS error:', recError);
-            Alert.alert('DB Error', 'RECOMMENDATIONS: ' + recError.message);
-          }
-          // Transactions
-          const { error: txError } = await supabase.from('transactions').upsert({
-            uid: userId,
-            category: null,
-            type: null,
-            title: null,
-            account: null,
-            amount: null,
-            date: null,
-          });
-          if (txError) {
-            console.error('TRANSACTIONS error:', txError);
-            Alert.alert('DB Error', 'TRANSACTIONS: ' + txError.message);
-          }
           // Categories
           const categories = [
             { name: 'Groceries', color: '#388E3C' },

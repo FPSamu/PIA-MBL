@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Text, View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import Categorie from '../components/Categorie';
 import { getAuthenticatedSupabase } from '../../../onboarding/services/supabaseClient';
-import { getSession } from '../../../services/session';
+import { ensureValidSession } from '../../../services/session';
 
 interface Category {
   name: string;
@@ -20,7 +20,7 @@ export default function Categories({ selected, onSelect }: { selected?: string; 
       setLoading(true);
       setError(null);
       try {
-        const session = await getSession();
+        const session = await ensureValidSession();
         const uid = session?.user?.id;
         if (!uid) {
           setError('No user session found');

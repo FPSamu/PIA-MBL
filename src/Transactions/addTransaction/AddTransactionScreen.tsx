@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Amount from './components/Amount';
 import Title from './components/Title';
@@ -8,6 +8,8 @@ import TransactionType from './components/TransactionType';
 import Categories from './sections/Categories';
 import Accounts from './sections/Accounts';
 import SaveButton from './components/SaveButton';
+import { getAuthenticatedSupabase } from '../../onboarding/services/supabaseClient';
+import { ensureValidSession } from '../../services/session';
 
 export default function AddTransactionScreen({ onClose }: { onClose?: () => void }) {
   const [type, setType] = useState<'Expenses' | 'Income'>('Expenses');
@@ -26,10 +28,51 @@ export default function AddTransactionScreen({ onClose }: { onClose?: () => void
   const [date, setDate] = useState(getCurrentDate());
   const [category, setCategory] = useState<string>('');
   const [account, setAccount] = useState<string>('');
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    // TODO: Implement save transaction logic
-    console.log('Saving transaction:', { type, amount, title, date, category, account });
+  const handleSave = async () => {
+    if (!isFormValid) return;
+    
+    setSaving(true);
+    try {
+      const session = await ensureValidSession();
+      if (!session?.user?.id) {
+        Alert.alert('Error', 'No user session found. Please log in again.');
+        return;
+      }
+
+      const authenticatedSupabase = await getAuthenticatedSupabase();
+      
+      // Prepare transaction data
+      const transactionData = {
+        uid: session.user.id,
+        category: category,
+        type: type === 'Expenses' ? 'expense' : 'income',
+        title: title.trim() || category, // Use category as title if title is empty
+        account: account,
+        amount: parseFloat(amount),
+        date: date,
+      };
+
+      const { error } = await authenticatedSupabase
+        .from('transactions')
+        .insert(transactionData);
+
+      if (error) {
+        console.error('Error saving transaction:', error);
+        Alert.alert('Error', 'Failed to save transaction. Please try again.');
+      } else {
+        console.log('Transaction saved successfully:', transactionData);
+        Alert.alert('Success', 'Transaction saved successfully!', [
+          { text: 'OK', onPress: onClose }
+        ]);
+      }
+    } catch (error: any) {
+      console.error('Error saving transaction:', error);
+      Alert.alert('Error', 'Failed to save transaction. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const isFormValid = amount.trim() && category && account;
@@ -58,7 +101,7 @@ export default function AddTransactionScreen({ onClose }: { onClose?: () => void
             <Categories selected={category} onSelect={setCategory} />
             <Accounts selected={account} onSelect={setAccount} />
             <DateComponent value={date} onChangeText={setDate} />
-            <SaveButton onPress={handleSave} disabled={!isFormValid} />
+            <SaveButton onPress={handleSave} disabled={!isFormValid || saving} saving={saving} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
