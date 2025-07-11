@@ -41,7 +41,7 @@ const CATEGORY_CONFIG = {
 };
 
 interface CategorieProps {
-  category: keyof typeof CATEGORY_CONFIG;
+  category: string;
 }
 
 export default function Categorie({ category }: CategorieProps) {

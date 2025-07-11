@@ -1,20 +1,38 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Amount from './components/Amount';
 import Title from './components/Title';
+import DateComponent from './components/Date';
 import TransactionType from './components/TransactionType';
 import Categories from './sections/Categories';
 import Accounts from './sections/Accounts';
+import SaveButton from './components/SaveButton';
 
 export default function AddTransactionScreen({ onClose }: { onClose?: () => void }) {
   const [type, setType] = useState<'Expenses' | 'Income'>('Expenses');
   const [amount, setAmount] = useState('');
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<
-    'Income' | 'Groceries' | 'Restaurant' | 'Transport' | 'House' | 'Shopping' | 'Gas'
-  >('Groceries');
+  
+  // Initialize with current date
+  const getCurrentDate = () => {
+    const currentDate = new Date();
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const day = String(currentDate.getDate()).padStart(2, '0');
+    const year = currentDate.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
+  
+  const [date, setDate] = useState(getCurrentDate());
+  const [category, setCategory] = useState<string>('');
   const [account, setAccount] = useState<string>('');
+
+  const handleSave = () => {
+    // TODO: Implement save transaction logic
+    console.log('Saving transaction:', { type, amount, title, date, category, account });
+  };
+
+  const isFormValid = amount.trim() && category && account;
 
   return (
     <View style={styles.screen}>
@@ -24,16 +42,26 @@ export default function AddTransactionScreen({ onClose }: { onClose?: () => void
           <Ionicons name="close" size={28} color="#1C1C1E" />
         </TouchableOpacity>
       </View>
-      <View style={styles.container}>
-        <View style={styles.typeRow}>
-          <TransactionType label="Expenses" selected={type === 'Expenses'} onPress={() => setType('Expenses')} />
-          <TransactionType label="Income" selected={type === 'Income'} onPress={() => setType('Income')} />
-        </View>
-        <Amount value={amount} onChangeText={setAmount} />
-        <Title value={title} onChangeText={setTitle} />
-        <Categories selected={category} onSelect={setCategory} />
-        <Accounts selected={account} onSelect={setAccount} />
-      </View>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 25}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          <View style={styles.container}>
+            <View style={styles.typeRow}>
+              <TransactionType label="Expenses" selected={type === 'Expenses'} onPress={() => setType('Expenses')} />
+              <TransactionType label="Income" selected={type === 'Income'} onPress={() => setType('Income')} />
+            </View>
+            <Amount value={amount} onChangeText={setAmount} />
+            <Title value={title} onChangeText={setTitle} />
+            <Categories selected={category} onSelect={setCategory} />
+            <Accounts selected={account} onSelect={setAccount} />
+            <DateComponent value={date} onChangeText={setDate} />
+            <SaveButton onPress={handleSave} disabled={!isFormValid} />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -59,6 +87,10 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 4,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
   },
   container: {
     backgroundColor: '#fff',

@@ -127,6 +127,28 @@ export default function SignupScreen({ onSignup, onSwitchToLogin, onboardingData
             console.error('TRANSACTIONS error:', txError);
             Alert.alert('DB Error', 'TRANSACTIONS: ' + txError.message);
           }
+          // Categories
+          const categories = [
+            { name: 'Groceries', color: '#388E3C' },
+            { name: 'Restaurant', color: '#FF9800' },
+            { name: 'Transport', color: '#1976D2' },
+            { name: 'House', color: '#7C4DFF' },
+            { name: 'Shopping', color: '#FF5722' },
+            { name: 'Gas', color: '#FBC02D' },
+            { name: 'Income', color: '#00B383' },
+          ];
+          
+          for (const category of categories) {
+            const { error: categoryError } = await supabase.from('categories').upsert({
+              uid: userId,
+              name: category.name,
+              color: category.color,
+            });
+            if (categoryError) {
+              console.error(`CATEGORY ${category.name} error:`, categoryError);
+              Alert.alert('DB Error', `CATEGORY ${category.name}: ` + categoryError.message);
+            }
+          }
         }
         Alert.alert('Success', 'Account created! Please check your email to confirm.');
         if (onSignup) onSignup();
