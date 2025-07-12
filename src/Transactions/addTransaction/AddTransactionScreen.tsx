@@ -54,15 +54,116 @@ export default function AddTransactionScreen({ onClose }: { onClose?: () => void
         date: date,
       };
 
-      const { error } = await authenticatedSupabase
+      // Insert transaction
+      const { error: txError } = await authenticatedSupabase
         .from('transactions')
         .insert(transactionData);
 
-      if (error) {
-        console.error('Error saving transaction:', error);
+      if (txError) {
+        console.error('Error saving transaction:', txError);
         Alert.alert('Error', 'Failed to save transaction. Please try again.');
+        setSaving(false);
+        return;
+      }
+
+      // Fetch current balance for the selected account
+      const { data: accountData, error: accFetchError } = await authenticatedSupabase
+        .from('accounts')
+        .select('balance')
+        .eq('uid', session.user.id)
+        .eq('title', account)
+        .single();
+
+      console.log('Account balance update debug:', {
+        uid: session.user.id,
+        accountTitle: account,
+        accountData,
+        accFetchError
+      });
+
+      if (accFetchError) {
+        console.error('Error fetching account balance:', accFetchError);
+        Alert.alert('Error', 'Transaction saved, but failed to update account balance.');
+        setSaving(false);
+        if (onClose) onClose();
+        return;
+      }
+
+      let currentBalance = accountData?.balance ?? 0;
+      if (typeof currentBalance !== 'number') {
+        currentBalance = parseFloat(currentBalance) || 0;
+      }
+
+      // Calculate new balance
+      const amt = parseFloat(amount);
+      const newBalance =
+        type === 'Expenses' ? currentBalance - amt : currentBalance + amt;
+
+      console.log('Balance calculation:', {
+        currentBalance,
+        amount: amt,
+        type,
+        newBalance
+      });
+
+      // Update account balance
+      const { error: accUpdateError } = await authenticatedSupabase
+        .from('accounts')
+        .update({ balance: newBalance })
+        .eq('uid', session.user.id)
+        .eq('title', account);
+
+      console.log('Account update result:', { accUpdateError });
+
+      if (accUpdateError) {
+        console.error('Error updating account balance:', accUpdateError);
+        Alert.alert('Error', 'Transaction saved, but failed to update account balance.');
       } else {
-        console.log('Transaction saved successfully:', transactionData);
+        // Update user total balance
+        const { data: allAccounts, error: fetchAllError } = await authenticatedSupabase
+          .from('accounts')
+          .select('title, balance')
+          .eq('uid', session.user.id);
+
+        if (fetchAllError) {
+          console.error('Error fetching all accounts for total balance:', fetchAllError);
+        } else {
+          let cashBalance = 0;
+          let savingsBalance = 0;
+          let creditCardBalance = 0;
+
+          allAccounts.forEach(acc => {
+            if (acc.title === 'Cash') {
+              cashBalance = parseFloat(acc.balance) || 0;
+            } else if (acc.title === 'Savings') {
+              savingsBalance = parseFloat(acc.balance) || 0;
+            } else if (acc.title === 'Credit card') {
+              creditCardBalance = parseFloat(acc.balance) || 0;
+            }
+          });
+
+          const totalBalance = (cashBalance + savingsBalance) - creditCardBalance;
+
+          console.log('Total balance calculation:', {
+            cashBalance,
+            savingsBalance,
+            creditCardBalance,
+            totalBalance
+          });
+
+          // Update user_balance table
+          const { error: totalBalanceError } = await authenticatedSupabase
+            .from('user_balance')
+            .update({ total_balance: totalBalance })
+            .eq('uid', session.user.id);
+
+          if (totalBalanceError) {
+            console.error('Error updating total balance:', totalBalanceError);
+          } else {
+            console.log('Total balance updated successfully');
+          }
+        }
+
         Alert.alert('Success', 'Transaction saved successfully!', [
           { text: 'OK', onPress: onClose }
         ]);

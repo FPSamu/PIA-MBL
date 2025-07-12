@@ -8,6 +8,7 @@ import GoalsScreen from './src/onboarding/screens/GoalsScreen';
 import AboutUserScreen from './src/onboarding/screens/AboutUserScreen';
 import SignupScreen from './src/onboarding/screens/SignupScreen';
 import LoginScreen from './src/onboarding/screens/LoginScreen';
+import SplashScreen from './src/onboarding/screens/SplashScreen';
 import Dashboard from './src/Dashboard/Dashboard';
 import ProgressBar from './src/onboarding/components/ProgressBar';
 import Navbar from './src/navbar/Navbar';
@@ -78,7 +79,9 @@ export default function App() {
   } else if (currentScreen === 'login') {
     content = <LoginScreen onLogin={navigateToDashboard} onSwitchToSignup={navigateToFeatures} />;
   } else if (currentScreen === 'signup') {
-    content = <SignupScreen onSignup={navigateToDashboard} onSwitchToLogin={navigateToLogin} onboardingData={{ selectedFeature, selectedGoal, customGoal, customAmount, aboutAnswers }} />;
+    content = <SignupScreen onSignup={navigateToDashboard} onSwitchToLogin={navigateToLogin} onVerificationRequired={navigateToSplash} onboardingData={{ selectedFeature, selectedGoal, customGoal, customAmount, aboutAnswers }} />;
+  } else if (currentScreen === 'splash') {
+    content = <SplashScreen onVerified={navigateToDashboard} />;
   } else if (currentScreen === 'dashboard') {
     content = <Dashboard onLogout={() => setCurrentScreen('getStarted')} />;
   }
@@ -111,6 +114,7 @@ export default function App() {
   function navigateToLogin() { setCurrentScreen('login'); }
   function navigateToSignup() { setCurrentScreen('signup'); }
   function navigateToDashboard() { setCurrentScreen('dashboard'); }
+  function navigateToSplash() { setCurrentScreen('splash'); }
 }
 
 const styles = StyleSheet.create({

@@ -3,6 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../onboarding/services/supabaseClient';
 
 const SESSION_KEY = 'user_session';
+const USER_KEY = 'user_info';
+const CREDENTIALS_KEY = 'temp_credentials';
 
 export async function saveSession(session) {
   try {
@@ -11,6 +13,48 @@ export async function saveSession(session) {
   } catch (e) {
     console.error('Failed to save session:', e);
     return false;
+  }
+}
+
+export async function saveUserInfo(user) {
+  try {
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
+    return true;
+  } catch (e) {
+    console.error('Failed to save user info:', e);
+    return false;
+  }
+}
+
+export async function getUserInfo() {
+  try {
+    const value = await AsyncStorage.getItem(USER_KEY);
+    if (!value) return null;
+    return JSON.parse(value);
+  } catch (e) {
+    console.error('Failed to get user info:', e);
+    return null;
+  }
+}
+
+export async function saveCredentials(email, password) {
+  try {
+    await AsyncStorage.setItem(CREDENTIALS_KEY, JSON.stringify({ email, password }));
+    return true;
+  } catch (e) {
+    console.error('Failed to save credentials:', e);
+    return false;
+  }
+}
+
+export async function getCredentials() {
+  try {
+    const value = await AsyncStorage.getItem(CREDENTIALS_KEY);
+    if (!value) return null;
+    return JSON.parse(value);
+  } catch (e) {
+    console.error('Failed to get credentials:', e);
+    return null;
   }
 }
 
@@ -69,6 +113,8 @@ export async function refreshSession(session) {
 export async function removeSession() {
   try {
     await AsyncStorage.removeItem(SESSION_KEY);
+    await AsyncStorage.removeItem(USER_KEY);
+    await AsyncStorage.removeItem(CREDENTIALS_KEY);
     return true;
   } catch (e) {
     console.error('Failed to remove session:', e);
@@ -79,7 +125,7 @@ export async function removeSession() {
 // Set up auth state change listener for automatic session management
 export function initializeSessionListener() {
   supabase.auth.onAuthStateChange(async (event, session) => {
-    console.log('Auth state changed:', event);
+    console.log('Auth state changed:', event, session ? 'with session' : 'no session');
     
     if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
       if (session) {
@@ -89,6 +135,11 @@ export function initializeSessionListener() {
     } else if (event === 'SIGNED_OUT') {
       await removeSession();
       console.log('Session removed after sign out');
+    } else if (event === 'USER_UPDATED') {
+      if (session) {
+        await saveSession(session);
+        console.log('Session updated after user update');
+      }
     }
   });
 }

@@ -70,9 +70,9 @@ export default function Accounts({ selected, onSelect }: { selected?: string; on
     try {
       const authenticatedSupabase = await getAuthenticatedSupabase();
       const defaultAccounts = [
-        { account_name: 'cash', title: 'Cash', balance: null },
-        { account_name: 'credit_card', title: 'Credit card', balance: null },
-        { account_name: 'savings', title: 'Savings', balance: null }
+        { account_name: 'cash', title: 'Cash', balance: 0 },
+        { account_name: 'credit_card', title: 'Credit card', balance: 0 },
+        { account_name: 'savings', title: 'Savings', balance: 0 }
       ];
       
       for (const account of defaultAccounts) {
