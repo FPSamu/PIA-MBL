@@ -1,11 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { supabase } from '../services/supabaseClient';
 import { getSession, saveSession, getUserInfo, saveUserInfo, getCredentials } from '../../services/session';
 
 export default function SplashScreen({ onVerified }: { onVerified: () => void }) {
   const [checking, setChecking] = useState(false);
+  const [resending, setResending] = useState(false);
   const [message, setMessage] = useState('Please verify your account with the message we just sent to your email');
+  const [timer, setTimer] = useState(60);
+
+  useEffect(() => {
+    let countdown: NodeJS.Timeout | null = null;
+    if (timer > 0) {
+      countdown = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (countdown) clearInterval(countdown);
+    };
+  }, [timer]);
 
   useEffect(() => {
     const checkVerification = async () => {
@@ -62,6 +76,36 @@ export default function SplashScreen({ onVerified }: { onVerified: () => void })
     return () => clearInterval(interval);
   }, [onVerified]);
 
+  const handleResendEmail = async () => {
+    setResending(true);
+    try {
+      const credentials = await getCredentials();
+      if (!credentials) {
+        Alert.alert('Error', 'No stored credentials found. Please sign up again.');
+        return;
+      }
+
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: credentials.email,
+      });
+
+      if (error) {
+        console.error('Error resending verification email:', error);
+        Alert.alert('Error', 'Failed to resend verification email. Please try again.');
+      } else {
+        console.log('Verification email resent successfully');
+        Alert.alert('Success', 'Verification email has been resent to your email address.');
+        setTimer(60); // Restart timer after resending
+      }
+    } catch (error) {
+      console.error('Error in resend function:', error);
+      Alert.alert('Error', 'Failed to resend verification email. Please try again.');
+    } finally {
+      setResending(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -73,6 +117,19 @@ export default function SplashScreen({ onVerified }: { onVerified: () => void })
             <Text style={styles.loadingText}>Checking verification status...</Text>
           </View>
         )}
+        <TouchableOpacity 
+          style={[styles.resendButton, (resending || timer > 0) && styles.resendButtonDisabled]} 
+          onPress={handleResendEmail}
+          disabled={resending || timer > 0}
+        >
+          <Text style={styles.resendButtonText}>
+            {resending
+              ? 'Sending...'
+              : timer > 0
+                ? `Resend Verification Email (${timer}s)`
+                : 'Resend Verification Email'}
+          </Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -111,5 +168,21 @@ const styles = StyleSheet.create({
     color: '#E2E8F0',
     fontSize: 14,
     marginTop: 12,
+  },
+  resendButton: {
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 20,
+  },
+  resendButtonDisabled: {
+    backgroundColor: '#6b7280',
+  },
+  resendButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });

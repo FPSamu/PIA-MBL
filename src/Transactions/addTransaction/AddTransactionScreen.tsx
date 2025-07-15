@@ -44,13 +44,14 @@ export default function AddTransactionScreen({ onClose }: { onClose?: () => void
       const authenticatedSupabase = await getAuthenticatedSupabase();
       
       // Prepare transaction data
+      const amt = parseFloat(amount);
       const transactionData = {
         uid: session.user.id,
         category: category,
         type: type === 'Expenses' ? 'expense' : 'income',
         title: title.trim() || category, // Use category as title if title is empty
         account: account,
-        amount: parseFloat(amount),
+        amount: type === 'Expenses' ? -Math.abs(amt) : Math.abs(amt),
         date: date,
       };
 
@@ -95,7 +96,6 @@ export default function AddTransactionScreen({ onClose }: { onClose?: () => void
       }
 
       // Calculate new balance
-      const amt = parseFloat(amount);
       const newBalance =
         type === 'Expenses' ? currentBalance - amt : currentBalance + amt;
 
@@ -142,7 +142,7 @@ export default function AddTransactionScreen({ onClose }: { onClose?: () => void
             }
           });
 
-          const totalBalance = (cashBalance + savingsBalance) - creditCardBalance;
+          const totalBalance = (cashBalance + savingsBalance) + creditCardBalance;
 
           console.log('Total balance calculation:', {
             cashBalance,
@@ -151,16 +151,15 @@ export default function AddTransactionScreen({ onClose }: { onClose?: () => void
             totalBalance
           });
 
-          // Update user_balance table
-          const { error: totalBalanceError } = await authenticatedSupabase
+          // Update user_balance table (always upsert to guarantee row exists)
+          const { error: upsertError } = await authenticatedSupabase
             .from('user_balance')
             .update({ total_balance: totalBalance })
             .eq('uid', session.user.id);
-
-          if (totalBalanceError) {
-            console.error('Error updating total balance:', totalBalanceError);
+          if (upsertError) {
+            console.error('Error upserting total balance:', upsertError);
           } else {
-            console.log('Total balance updated successfully');
+            console.log('Total balance upserted successfully');
           }
         }
 

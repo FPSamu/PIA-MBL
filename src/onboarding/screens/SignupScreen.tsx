@@ -75,7 +75,15 @@ export default function SignupScreen({ onSignup, onSwitchToLogin, onVerification
             Alert.alert('DB Error', 'SAVINGS_INFO: ' + savingsError.message);
           }
 
-
+          // User Balance
+          const { error: balanceError } = await supabase.from('user_balance').upsert({
+            uid: userId,
+            total_balance: 0,
+          });
+          if (balanceError) {
+            console.error('USER_BALANCE error:', balanceError);
+            Alert.alert('DB Error', 'USER_BALANCE: ' + balanceError.message);
+          }
 
           // // Accounts
           // const { error: accountsError } = await supabase.from('accounts').upsert({
@@ -112,20 +120,6 @@ export default function SignupScreen({ onSignup, onSwitchToLogin, onVerification
           //   console.error('SAVINGS_ACCOUNT error:', savingsAccountError);
           //   Alert.alert('DB Error', 'SAVINGS_ACCOUNT: ' + savingsAccountError.message);
           // }
-
-
-
-          // User Balance
-          const { error: balanceError } = await supabase.from('user_balance').upsert({
-            uid: userId,
-            total_balance: null,
-          });
-          if (balanceError) {
-            console.error('USER_BALANCE error:', balanceError);
-            Alert.alert('DB Error', 'USER_BALANCE: ' + balanceError.message);
-          }
-
-
           
           // // Categories
           // const categories = [
