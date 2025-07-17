@@ -13,6 +13,7 @@ import Dashboard from './src/Dashboard/Dashboard';
 import ProgressBar from './src/onboarding/components/ProgressBar';
 import Navbar from './src/navbar/Navbar';
 import AddTransactionScreen from './src/Transactions/addTransaction/AddTransactionScreen';
+import { supabase } from './src/onboarding/services/supabaseClient'; // import supabase
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -28,19 +29,29 @@ export default function App() {
   const [customGoal, setCustomGoal] = useState('');
   const [customAmount, setCustomAmount] = useState('');
   const [aboutAnswers, setAboutAnswers] = useState({ source: null, goal: null });
+  const [dashboardRefresh, setDashboardRefresh] = useState(0);
 
   useEffect(() => {
-    // Initialize session listener for automatic refresh
-    initializeSessionListener();
-    
-    const checkSession = async () => {
-      const session = await ensureValidSession();
-      if (session) {
+    const restoreSession = async () => {
+      const session = await getSession();
+      if (session && session.access_token && session.refresh_token) {
+        // Restore session into Supabase's internal state
+        await supabase.auth.setSession({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+        });
+      }
+      // Now initialize the listener
+      initializeSessionListener();
+  
+      // Now check if session is valid and set screen accordingly
+      const validSession = await ensureValidSession();
+      if (validSession) {
         setCurrentScreen('dashboard');
       }
       setCheckingSession(false);
     };
-    checkSession();
+    restoreSession();
   }, []);
 
   useEffect(() => {
@@ -83,7 +94,7 @@ export default function App() {
   } else if (currentScreen === 'splash') {
     content = <SplashScreen onVerified={navigateToDashboard} />;
   } else if (currentScreen === 'dashboard') {
-    content = <Dashboard onLogout={() => setCurrentScreen('getStarted')} />;
+    content = <Dashboard onLogout={() => setCurrentScreen('getStarted')} refreshKey={dashboardRefresh} />;
   }
 
   return (
@@ -113,7 +124,10 @@ export default function App() {
   function navigateToAbout() { setCurrentScreen('about'); }
   function navigateToLogin() { setCurrentScreen('login'); }
   function navigateToSignup() { setCurrentScreen('signup'); }
-  function navigateToDashboard() { setCurrentScreen('dashboard'); }
+  function navigateToDashboard() {
+    setDashboardRefresh(prev => prev + 1);
+    setCurrentScreen('dashboard');
+  }
   function navigateToSplash() { setCurrentScreen('splash'); }
 }
 

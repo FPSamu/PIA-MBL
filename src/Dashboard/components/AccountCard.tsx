@@ -6,6 +6,7 @@ import { FontAwesome5, MaterialIcons, Ionicons } from '@expo/vector-icons';
 interface AccountCardProps {
   type: 'cash' | 'savings' | 'credit';
   amount: string | number;
+  positive?: boolean;
 }
 
 const BASE_COLORS = {
@@ -26,7 +27,7 @@ const ICONS = {
   credit: (color: string) => <Ionicons name="card" size={22} color={color} />,
 };
 
-export default function AccountCard({ type, amount }: AccountCardProps) {
+export default function AccountCard({ type, amount, positive }: AccountCardProps) {
   const [fontsLoaded] = useFonts({
     Inter_600SemiBold,
     Inter_500Medium,
@@ -35,7 +36,14 @@ export default function AccountCard({ type, amount }: AccountCardProps) {
   if (!fontsLoaded) return null;
 
   const isCredit = type === 'credit';
-  const amountColor = isCredit ? '#FF5252' : '#1C1C1E';
+  let amountColor = '#1C1C1E';
+  if (isCredit) {
+    if (positive) {
+      amountColor = '#06BF8B'; // green for positive credit
+    } else {
+      amountColor = '#FF5252'; // red for negative credit
+    }
+  }
   const iconColor = BASE_COLORS[type];
 
   return (
