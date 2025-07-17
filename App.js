@@ -14,6 +14,7 @@ import ProgressBar from './src/onboarding/components/ProgressBar';
 import Navbar from './src/navbar/Navbar';
 import AddTransactionScreen from './src/Transactions/addTransaction/AddTransactionScreen';
 import { supabase } from './src/onboarding/services/supabaseClient'; // import supabase
+import TransactionScreen from './src/Transactions/transactionsScreen/TransactionScreen';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -75,6 +76,7 @@ export default function App() {
   const handleShowAddTransaction = () => setShowAddTransaction(true);
   const handleCloseAddTransaction = () => setShowAddTransaction(false);
 
+
   let content = null;
 
   if (checkingSession) {
@@ -94,14 +96,20 @@ export default function App() {
   } else if (currentScreen === 'splash') {
     content = <SplashScreen onVerified={navigateToDashboard} />;
   } else if (currentScreen === 'dashboard') {
-    content = <Dashboard onLogout={() => setCurrentScreen('getStarted')} refreshKey={dashboardRefresh} />;
+    content = <Dashboard onLogout={() => setCurrentScreen('getStarted')} refreshKey={dashboardRefresh} onSeeAll={navigateToTransactions} />;
+  } else if (currentScreen === 'transactions') {
+    content = <TransactionScreen onBack={navigateToDashboard} />;
   }
 
   return (
     <View style={styles.container}>
       {content}
-      {currentScreen === 'dashboard' && (
-        <Navbar onAddPress={handleShowAddTransaction} />
+      {(currentScreen === 'dashboard' || currentScreen === 'transactions') && (
+        <Navbar 
+          onAddPress={handleShowAddTransaction}
+          selected={currentScreen === 'dashboard' ? 'Home' : currentScreen === 'transactions' ? 'Transactions' : undefined}
+          onNavPress={handleNavPress}
+        />
       )}
       <Modal
         visible={showAddTransaction}
@@ -111,7 +119,10 @@ export default function App() {
       >
         <View style={styles.modalOverlay}>
           <Animated.View style={[styles.animatedModal, { transform: [{ translateY: slideAnim }] }]}> 
-            <AddTransactionScreen onClose={handleCloseAddTransaction} />
+            <AddTransactionScreen 
+              onClose={handleCloseAddTransaction} 
+              onTransactionAdded={() => setDashboardRefresh(prev => prev + 1)}
+            />
           </Animated.View>
         </View>
       </Modal>
@@ -129,6 +140,13 @@ export default function App() {
     setCurrentScreen('dashboard');
   }
   function navigateToSplash() { setCurrentScreen('splash'); }
+  function navigateToTransactions() { setCurrentScreen('transactions'); }
+
+  function handleNavPress(nav) {
+    if (nav === 'Home') navigateToDashboard();
+    else if (nav === 'Transactions') navigateToTransactions();
+    // Add more as needed for Insights, Settings
+  }
 }
 
 const styles = StyleSheet.create({

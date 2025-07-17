@@ -11,7 +11,7 @@ import SaveButton from './components/SaveButton';
 import { getAuthenticatedSupabase } from '../../onboarding/services/supabaseClient';
 import { ensureValidSession } from '../../services/session';
 
-export default function AddTransactionScreen({ onClose }: { onClose?: () => void }) {
+export default function AddTransactionScreen({ onClose, onTransactionAdded }: { onClose?: () => void, onTransactionAdded?: () => void }) {
   const [type, setType] = useState<'Expenses' | 'Income'>('Expenses');
   const [amount, setAmount] = useState('');
   const [title, setTitle] = useState('');
@@ -162,6 +162,9 @@ export default function AddTransactionScreen({ onClose }: { onClose?: () => void
             console.log('Total balance upserted successfully');
           }
         }
+
+        // Notify parent that a transaction was added
+        if (onTransactionAdded) onTransactionAdded();
 
         Alert.alert('Success', 'Transaction saved successfully!', [
           { text: 'OK', onPress: onClose }

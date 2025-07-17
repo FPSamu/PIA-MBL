@@ -5,7 +5,7 @@ import AccountCard from '../components/AccountCard';
 import { ensureValidSession } from '../../services/session';
 import { supabase } from '../../onboarding/services/supabaseClient';
 
-export default function Accounts() {
+export default function Accounts({ refreshKey }: { refreshKey?: number }) {
   const [cash, setCash] = useState<string | number>('Loading...');
   const [savings, setSavings] = useState<string | number>('Loading...');
   const [credit, setCredit] = useState<string | number>('Loading...');
@@ -49,7 +49,7 @@ export default function Accounts() {
       setLoading(false);
     };
     fetchAccounts();
-  }, []);
+  }, [refreshKey]);
 
   return (
     <View style={styles.container}>

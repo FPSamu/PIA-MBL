@@ -8,17 +8,16 @@ type NavType = typeof NAVS[number];
 
 interface NavbarProps {
   onAddPress?: () => void;
+  selected?: NavType;
+  onNavPress?: (nav: NavType) => void;
 }
 
-export default function Navbar({ onAddPress }: NavbarProps) {
-  const [selected, setSelected] = useState<NavType>('Home');
-
+export default function Navbar({ onAddPress, selected, onNavPress }: NavbarProps) {
   const handleNavPress = (nav: NavType) => {
-    setSelected(nav);
+    if (onNavPress) onNavPress(nav);
   };
 
   const handleAddPress = () => {
-    setSelected(undefined);
     if (onAddPress) onAddPress();
   };
 
@@ -42,7 +41,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: Platform.OS === 'ios' ? 24 : 16,
+    bottom: Platform.OS === 'ios' ? 24 : 36,
     alignItems: 'center',
     zIndex: 100,
     pointerEvents: 'box-none',

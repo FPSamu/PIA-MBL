@@ -7,8 +7,9 @@ import Balance from './sections/Balance';
 import Accounts from './sections/Accounts';
 import { ensureValidSession } from '../services/session';
 import { supabase } from '../onboarding/services/supabaseClient';
+import Transactions from './sections/Transactions';
 
-export default function Dashboard({ onLogout, refreshKey }: { onLogout?: () => void, refreshKey?: number }) {
+export default function Dashboard({ onLogout, refreshKey, onSeeAll }: { onLogout?: () => void, refreshKey?: number, onSeeAll?: () => void }) {
   const [balance, setBalance] = useState<string | number>('Loading...');
   const [loading, setLoading] = useState(true);
   const [income, setIncome] = useState<string | number>('Loading...');
@@ -78,7 +79,8 @@ export default function Dashboard({ onLogout, refreshKey }: { onLogout?: () => v
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <DashboardHeader />
         <Balance total={loading ? 'Loading...' : '$' + balance} income={income} expenses={expenses} />
-        <Accounts />
+        <Accounts refreshKey={refreshKey} />
+        <Transactions refreshKey={refreshKey} onSeeAll={onSeeAll} />
         <Button title="Log Out (Test)" onPress={handleLogout} />
       </ScrollView>
     </View>
@@ -92,7 +94,7 @@ const styles = StyleSheet.create({
     paddingTop: 0,
   },
   scrollContent: {
-    paddingBottom: Platform.OS === 'ios' ? 100 : 80, // space for navbar
+    paddingBottom: Platform.OS === 'ios' ? 100 : 80,
   },
   navbar: {
     position: 'absolute',
