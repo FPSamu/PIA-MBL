@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import TransactionCard from '../../Dashboard/components/TransactionCard';
 import { ensureValidSession } from '../../services/session';
 import { supabase } from '../../onboarding/services/supabaseClient';
@@ -35,6 +36,7 @@ export default function TransactionScreen({ onBack }: { onBack?: () => void }) {
 
   return (
     <View style={styles.screen}>
+      <StatusBar style="dark" backgroundColor="#000" />
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={26} color="#1e3a8a" />
@@ -50,7 +52,7 @@ export default function TransactionScreen({ onBack }: { onBack?: () => void }) {
             <Text style={{ textAlign: 'center', color: '#888', margin: 16 }}>No transactions found.</Text>
           ) : (
             transactions.map((item, idx, arr) => (
-              <React.Fragment key={item.id}>
+              <React.Fragment key={item.id || `${item.title}-${item.date}-${idx}`}>
                 <TransactionCard
                   title={item.title}
                   account={item.account}

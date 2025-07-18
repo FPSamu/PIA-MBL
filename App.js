@@ -13,7 +13,7 @@ import Dashboard from './src/Dashboard/Dashboard';
 import ProgressBar from './src/onboarding/components/ProgressBar';
 import Navbar from './src/navbar/Navbar';
 import AddTransactionScreen from './src/Transactions/addTransaction/AddTransactionScreen';
-import { supabase } from './src/onboarding/services/supabaseClient'; // import supabase
+import { supabase } from './src/onboarding/services/supabaseClient';
 import TransactionScreen from './src/Transactions/transactionsScreen/TransactionScreen';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -24,7 +24,6 @@ export default function App() {
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
-  // Onboarding state
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [customGoal, setCustomGoal] = useState('');
@@ -36,16 +35,13 @@ export default function App() {
     const restoreSession = async () => {
       const session = await getSession();
       if (session && session.access_token && session.refresh_token) {
-        // Restore session into Supabase's internal state
         await supabase.auth.setSession({
           access_token: session.access_token,
           refresh_token: session.refresh_token,
         });
       }
-      // Now initialize the listener
       initializeSessionListener();
   
-      // Now check if session is valid and set screen accordingly
       const validSession = await ensureValidSession();
       if (validSession) {
         setCurrentScreen('dashboard');
@@ -122,6 +118,7 @@ export default function App() {
             <AddTransactionScreen 
               onClose={handleCloseAddTransaction} 
               onTransactionAdded={() => setDashboardRefresh(prev => prev + 1)}
+              onNavPress={handleNavPress}
             />
           </Animated.View>
         </View>

@@ -10,8 +10,9 @@ import Accounts from './sections/Accounts';
 import SaveButton from './components/SaveButton';
 import { getAuthenticatedSupabase } from '../../onboarding/services/supabaseClient';
 import { ensureValidSession } from '../../services/session';
+import Navbar from '../../navbar/Navbar';
 
-export default function AddTransactionScreen({ onClose, onTransactionAdded }: { onClose?: () => void, onTransactionAdded?: () => void }) {
+export default function AddTransactionScreen({ onClose, onTransactionAdded, onNavPress }: { onClose?: () => void, onTransactionAdded?: () => void, onNavPress?: (nav: string) => void }) {
   const [type, setType] = useState<'Expenses' | 'Income'>('Expenses');
   const [amount, setAmount] = useState('');
   const [title, setTitle] = useState('');
@@ -208,6 +209,10 @@ export default function AddTransactionScreen({ onClose, onTransactionAdded }: { 
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <Navbar selected={undefined} onNavPress={nav => {
+        if (onNavPress) onNavPress(nav);
+        if (onClose) onClose();
+      }} />
     </View>
   );
 }
