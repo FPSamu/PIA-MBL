@@ -15,6 +15,8 @@ import Navbar from './src/navbar/Navbar';
 import AddTransactionScreen from './src/Transactions/addTransaction/AddTransactionScreen';
 import { supabase } from './src/onboarding/services/supabaseClient';
 import TransactionScreen from './src/Transactions/transactionsScreen/TransactionScreen';
+import InsightsScreen from './src/insights/Insights'
+import SettingsScreen from './src/settings/Settings'
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -95,15 +97,19 @@ export default function App() {
     content = <Dashboard onLogout={() => setCurrentScreen('getStarted')} refreshKey={dashboardRefresh} onSeeAll={navigateToTransactions} />;
   } else if (currentScreen === 'transactions') {
     content = <TransactionScreen onBack={navigateToDashboard} />;
+  } else if (currentScreen === 'insights') {
+    content = <InsightsScreen onBack={navigateToDashboard}/>;
+  } else if (currentScreen === 'settings') {
+    content = <SettingsScreen onBack={navigateToDashboard}/>;
   }
 
   return (
     <View style={styles.container}>
       {content}
-      {(currentScreen === 'dashboard' || currentScreen === 'transactions') && (
+      {(currentScreen === 'dashboard' || currentScreen === 'transactions' || currentScreen === 'insights' || currentScreen === 'settings') && (
         <Navbar 
           onAddPress={handleShowAddTransaction}
-          selected={currentScreen === 'dashboard' ? 'Home' : currentScreen === 'transactions' ? 'Transactions' : undefined}
+          selected={currentScreen === 'dashboard' ? 'Home' : currentScreen === 'transactions' ? 'Transactions' : currentScreen === 'insights' ? 'Insights' : currentScreen === 'settings' ? 'Settings' : undefined}
           onNavPress={handleNavPress}
         />
       )}
@@ -138,11 +144,14 @@ export default function App() {
   }
   function navigateToSplash() { setCurrentScreen('splash'); }
   function navigateToTransactions() { setCurrentScreen('transactions'); }
+  function navigateToInsights() { setCurrentScreen('insights'); }
+  function navigateToSettings() { setCurrentScreen('settings'); }
 
   function handleNavPress(nav) {
     if (nav === 'Home') navigateToDashboard();
     else if (nav === 'Transactions') navigateToTransactions();
-    // Add more as needed for Insights, Settings
+    else if (nav === 'Insights') navigateToInsights();
+    else if (nav === 'Settings') navigateToSettings();
   }
 }
 
