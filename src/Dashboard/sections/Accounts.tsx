@@ -34,6 +34,7 @@ export default function Accounts({ refreshKey }: { refreshKey?: number }) {
       } else {
         const cashAcc = data.find(acc => acc.title === 'Cash');
         const savingsAcc = data.find(acc => acc.title === 'Savings');
+        console.log('savings', savingsAcc.balance);
         const creditAcc = data.find(acc => acc.title === 'Credit card');
         setCash(cashAcc ? `$${Number(cashAcc.balance).toLocaleString()}` : '$0');
         setSavings(savingsAcc ? `$${Number(savingsAcc.balance).toLocaleString()}` : '$0');
