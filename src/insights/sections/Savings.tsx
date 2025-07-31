@@ -33,6 +33,7 @@ const TreeGrowthSection: React.FC<TreeGrowthSectionProps> = ({
       const { data: goalData, error: goalError } = await supabase
         .from("savings_info")
         .select("goal_amount")
+        .eq("uid", session.user.id) // ✅ filtrado por usuario
         .limit(1)
         .single();
 
@@ -40,6 +41,7 @@ const TreeGrowthSection: React.FC<TreeGrowthSectionProps> = ({
         .from("accounts")
         .select("balance")
         .eq("account_name", "savings")
+        .eq("uid", session.user.id) // ✅ filtrado por usuario
         .limit(1)
         .single();
 
@@ -66,19 +68,28 @@ const TreeGrowthSection: React.FC<TreeGrowthSectionProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!isAutoMode) return;
+    // Resetear la animación cuando cambia el percentage
+    setCurrentPercentage(0);
 
     const interval = setInterval(() => {
-      setCurrentPercentage((prev) => {
-        if (prev >= 100) {
-          return 0;
+      if (percentage !== null && !isNaN(percentage)) {
+        const validPercentage = Math.max(0, Math.min(100, percentage));
+        setCurrentPercentage(validPercentage);
+      }
+      setCurrentPercentage(prev => {
+        if (Math.abs(prev - percentage) < 1) {
+          clearInterval(interval);
+          return percentage;
         }
-        return prev + 3;
+        return prev + (percentage - prev) * 0.08;
       });
-    }, 300);
+    }, 40);
 
-    return () => clearInterval(interval);
-  }, [isAutoMode]);
+    return () => {
+      setCurrentPercentage(0);
+      clearInterval(interval);
+    }
+  }, [percentage]);
 
   return (
     <View style={styles.container}>
@@ -98,7 +109,12 @@ const TreeGrowthSection: React.FC<TreeGrowthSectionProps> = ({
 
           <View style={styles.treeWrapper}>
             <View style={styles.treeContainer}>
-              <TreeAnimation percentage={currentPercentage} width={280} height={320} />
+              <TreeAnimation
+                percentage={currentPercentage}
+                key={percentage}
+                width={280}
+                height={320}
+              />
             </View>
           </View>
         </View>
@@ -106,7 +122,6 @@ const TreeGrowthSection: React.FC<TreeGrowthSectionProps> = ({
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {

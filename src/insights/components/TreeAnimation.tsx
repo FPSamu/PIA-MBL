@@ -32,10 +32,13 @@ const TreeAnimation: React.FC<TreeAnimationProps> = ({
 
   // Función para determinar opacidad según el porcentaje
   const getOpacity = (threshold: number, endThreshold: number): number => {
-    if (currentPercentage < threshold) return 0;
-    if (currentPercentage >= endThreshold) return 1;
-    return (currentPercentage - threshold) / (endThreshold - threshold);
-  };
+  // Asegurar que currentPercentage esté en rango válido
+  const safePercentage = Math.max(0, Math.min(100, currentPercentage));
+  
+  if (safePercentage < threshold) return 0;
+  if (safePercentage >= endThreshold) return 1;
+  return (safePercentage - threshold) / (endThreshold - threshold);
+};
 
   const getSeedOpacity = (): number => {
     if (currentPercentage <= 3) return 1;

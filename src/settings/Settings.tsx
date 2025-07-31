@@ -4,6 +4,11 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { ensureValidSession } from "../services/session";
 import { supabase } from "../onboarding/services/supabaseClient";
+import SavingsGoal from "./components/SavingsGoal";
+import Cash from "./components/Cash";
+import Credit from "./components/Credit";
+import Privacy from "./components/Privacy";
+import Savings from "./components/Savings";
 
 export default function Settings({ onBack }: { onBack?: () => void }) {
   return (
@@ -19,116 +24,19 @@ export default function Settings({ onBack }: { onBack?: () => void }) {
         <View style={styles.container}>
             <View style={styles.section}>
               <Text style={styles.label}>Goal</Text>
-              <TouchableOpacity 
-                style={styles.button}
-                // onPress={handleGoalPress}
-                activeOpacity={0.7}
-              >
-                <View style={styles.iconContainer}>
-                  <Ionicons name="flag" size={20} color="#666" />
-                </View>
-                <View style={styles.textContainer}>
-                  <Text style={styles.buttonTitle}>Savings Goal</Text>
-                  <Text style={styles.buttonAmount}>$10,000</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#ccc" />
-              </TouchableOpacity>
+              <SavingsGoal />
             </View>
 
             <View style={styles.section}>
               <Text style={styles.label}>Accounts</Text>
-              <TouchableOpacity 
-                style={styles.button}
-                // onPress={() => handleAccountPress('Checking')}
-                activeOpacity={0.7}
-              >
-                <View style={styles.iconContainer}>
-                  <Ionicons name="card" size={20} color="#666" />
-                </View>
-                <View style={styles.textContainer}>
-                  <Text style={styles.buttonTitle}>Checking Account</Text>
-                  <Text style={styles.buttonAmount}>$2,450.00</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#ccc" />
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={[styles.button, styles.buttonSpacing]}
-                // onPress={() => handleAccountPress('Savings')}
-                activeOpacity={0.7}
-              >
-                <View style={styles.iconContainer}>
-                  <Ionicons name="wallet" size={20} color="#666" />
-                </View>
-                <View style={styles.textContainer}>
-                  <Text style={styles.buttonTitle}>Savings Account</Text>
-                  <Text style={styles.buttonAmount}>$8,750.50</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#ccc" />
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={[styles.button, styles.buttonSpacing]}
-                // onPress={() => handleAccountPress('Credit')}
-                activeOpacity={0.7}
-              >
-                <View style={styles.iconContainer}>
-                  <Ionicons name="card-outline" size={20} color="#666" />
-                </View>
-                <View style={styles.textContainer}>
-                  <Text style={styles.buttonTitle}>Credit Card</Text>
-                  <Text style={styles.buttonAmount}>-$1,245.30</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#ccc" />
-              </TouchableOpacity>
+              <Cash />
+              <Savings />
+              <Credit />
             </View>
 
             <View style={styles.section}>
               <Text style={styles.label}>App Settings</Text>
-              <TouchableOpacity 
-                style={styles.button}
-                // onPress={() => handleSettingPress('Notifications')}
-                activeOpacity={0.7}
-              >
-                <View style={styles.iconContainer}>
-                  <Ionicons name="notifications" size={20} color="#666" />
-                </View>
-                <View style={styles.textContainer}>
-                  <Text style={styles.buttonTitle}>Notifications</Text>
-                  <Text style={styles.buttonSubtitle}>Push notifications</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#ccc" />
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={[styles.button, styles.buttonSpacing]}
-                // onPress={() => handleSettingPress('Security')}
-                activeOpacity={0.7}
-              >
-                <View style={styles.iconContainer}>
-                  <Ionicons name="shield-checkmark" size={20} color="#666" />
-                </View>
-                <View style={styles.textContainer}>
-                  <Text style={styles.buttonTitle}>Security</Text>
-                  <Text style={styles.buttonSubtitle}>Face ID enabled</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#ccc" />
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={[styles.button, styles.buttonSpacing]}
-                // onPress={() => handleSettingPress('Privacy')}
-                activeOpacity={0.7}
-              >
-                <View style={styles.iconContainer}>
-                  <Ionicons name="lock-closed" size={20} color="#666" />
-                </View>
-                <View style={styles.textContainer}>
-                  <Text style={styles.buttonTitle}>Privacy</Text>
-                  <Text style={styles.buttonSubtitle}>Data & permissions</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color="#ccc" />
-              </TouchableOpacity>
+              <Privacy />
             </View>
         </View>
       </ScrollView>
@@ -158,51 +66,5 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 32,
-  },
-  button: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  buttonSpacing: {
-    marginTop: 12,
-  },
-  iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#f8f9fa',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  textContainer: {
-    flex: 1,
-  },
-  buttonTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1c1c1c',
-    marginBottom: 2,
-  },
-  buttonAmount: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#666',
-  },
-  buttonSubtitle: {
-    fontSize: 14,
-    color: '#999',
   },
 });
