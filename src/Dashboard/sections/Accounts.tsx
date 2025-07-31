@@ -6,51 +6,100 @@ import { ensureValidSession } from '../../services/session';
 import { supabase } from '../../onboarding/services/supabaseClient';
 
 export default function Accounts({ refreshKey }: { refreshKey?: number }) {
-  const [cash, setCash] = useState<string | number>('Loading...');
-  const [savings, setSavings] = useState<string | number>('Loading...');
-  const [credit, setCredit] = useState<string | number>('Loading...');
+  const [cash, setCash] = useState<string>('Loading...');
+  const [savings, setSavings] = useState<string>('Loading...');
+  const [credit, setCredit] = useState<string>('Loading...');
   const [creditPositive, setCreditPositive] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAccounts = async () => {
-      setLoading(true);
+    const fetchCash = async () => {
       const session = await ensureValidSession();
       if (!session?.user?.id) {
         setCash('N/A');
-        setSavings('N/A');
-        setCredit('N/A');
-        setLoading(false);
         return;
       }
+
       const { data, error } = await supabase
         .from('accounts')
-        .select('title, balance')
-        .eq('uid', session.user.id);
+        .select('balance')
+        .eq('account_name', 'cash')
+        .eq('uid', session.user.id)
+        .limit(1)
+        .single();
+
       if (error || !data) {
         setCash('N/A');
-        setSavings('N/A');
-        setCredit('N/A');
       } else {
-        const cashAcc = data.find(acc => acc.title === 'Cash');
-        const savingsAcc = data.find(acc => acc.title === 'Savings');
-        console.log('savings', savingsAcc.balance);
-        const creditAcc = data.find(acc => acc.title === 'Credit card');
-        setCash(cashAcc ? `$${Number(cashAcc.balance).toLocaleString()}` : '$0');
-        setSavings(savingsAcc ? `$${Number(savingsAcc.balance).toLocaleString()}` : '$0');
-        if (creditAcc) {
-          const creditValue = Number(creditAcc.balance);
-          setCredit(`${creditValue < 0 ? '-' : ''}$${Math.abs(creditValue).toLocaleString()}`);
-          setCreditPositive(creditValue >= 0);
-        } else {
-          setCredit('$0');
-          setCreditPositive(false);
-        }
+        setCash(`$${Number(data.balance).toLocaleString()}`);
       }
-      setLoading(false);
     };
-    fetchAccounts();
-  }, [refreshKey]);
+
+    fetchCash();
+  }, []);
+
+  useEffect(() => {
+    const fetchSavings = async () => {
+      const session = await ensureValidSession();
+      if (!session?.user?.id) {
+        setSavings('N/A');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('accounts')
+        .select('balance')
+        .eq('account_name', 'savings')
+        .eq('uid', session.user.id)
+        .limit(1)
+        .single();
+
+      if (error || !data) {
+        setSavings('N/A');
+      } else {
+        setSavings(`$${Number(data.balance).toLocaleString()}`);
+      }
+    };
+
+    fetchSavings();
+  }, []);
+
+  useEffect(() => {
+    const fetchCredit = async () => {
+      const session = await ensureValidSession();
+      if (!session?.user?.id) {
+        setCredit('N/A');
+        setCreditPositive(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('accounts')
+        .select('balance')
+        .eq('account_name', 'credit_card')
+        .eq('uid', session.user.id)
+        .limit(1)
+        .single();
+
+      if (error || !data) {
+        setCredit('N/A');
+        setCreditPositive(false);
+      } else {
+        const value = Number(data.balance);
+        setCredit(`${value < 0 ? '-' : ''}$${Math.abs(value).toLocaleString()}`);
+        setCreditPositive(value >= 0);
+      }
+    };
+
+    fetchCredit();
+  }, []);
+
+  useEffect(() => {
+    const stillLoading =
+      cash === 'Loading...' || savings === 'Loading...' || credit === 'Loading...';
+    setLoading(stillLoading);
+  }, [cash, savings, credit]);
+
 
   return (
     <View style={styles.container}>
