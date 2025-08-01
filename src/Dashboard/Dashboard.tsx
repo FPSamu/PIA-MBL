@@ -8,6 +8,7 @@ import Accounts from './sections/Accounts';
 import { ensureValidSession } from '../services/session';
 import { supabase } from '../onboarding/services/supabaseClient';
 import Transactions from './sections/Transactions';
+import Recommendations from './components/Recomendation';
 
 export default function Dashboard({ onLogout, refreshKey, onSeeAll }: { onLogout?: () => void, refreshKey?: number, onSeeAll?: () => void }) {
   const [balance, setBalance] = useState<string | number>('Loading...');
@@ -79,6 +80,13 @@ export default function Dashboard({ onLogout, refreshKey, onSeeAll }: { onLogout
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <DashboardHeader />
         <Balance total={loading ? 'Loading...' : '$' + balance} income={income} expenses={expenses} />
+        <Recommendations
+          title="Dining out too often?"
+          description="You've spent $155 on restaurants this week. That's 30% more than your usual. Consider cooking at home more often to save."
+          category="excessive_expenses"
+          onHelpfulPress={() => console.log('Helpful pressed')}
+          onNotForMePress={() => console.log('Not for me pressed')}
+        />
         <Accounts refreshKey={refreshKey} />
         <Transactions refreshKey={refreshKey} onSeeAll={onSeeAll} />
         <Button title="Log Out (Test)" onPress={handleLogout} />
