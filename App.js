@@ -100,7 +100,7 @@ export default function App() {
   } else if (currentScreen === 'insights') {
     content = <InsightsScreen onBack={navigateToDashboard}/>;
   } else if (currentScreen === 'settings') {
-    content = <SettingsScreen onBack={navigateToDashboard}/>;
+    content = <SettingsScreen onBack={navigateToDashboard} onLogout={() => setCurrentScreen('login')}/>;
   }
 
   return (

@@ -69,27 +69,15 @@ export default function Dashboard({ onLogout, refreshKey, onSeeAll }: { onLogout
     fetchBalanceAndTransactions();
   }, [refreshKey]);
 
-  const handleLogout = async () => {
-    await removeSession();
-    if (onLogout) onLogout();
-  };
-
   return (
     <View style={styles.container}>
       <StatusBar style="dark" backgroundColor="#000" />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <DashboardHeader />
         <Balance total={loading ? 'Loading...' : '$' + balance} income={income} expenses={expenses} />
-        <Recommendations
-          title="Dining out too often?"
-          description="You've spent $155 on restaurants this week. That's 30% more than your usual. Consider cooking at home more often to save."
-          category="excessive_expenses"
-          onHelpfulPress={() => console.log('Helpful pressed')}
-          onNotForMePress={() => console.log('Not for me pressed')}
-        />
+        <Recommendations />
         <Accounts refreshKey={refreshKey} />
         <Transactions refreshKey={refreshKey} onSeeAll={onSeeAll} />
-        <Button title="Log Out (Test)" onPress={handleLogout} />
       </ScrollView>
     </View>
   );

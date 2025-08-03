@@ -9,8 +9,9 @@ import Cash from "./components/Cash";
 import Credit from "./components/Credit";
 import Privacy from "./components/Privacy";
 import Savings from "./components/Savings";
+import AccountSettings from "./components/AccountSettings";
 
-export default function Settings({ onBack }: { onBack?: () => void }) {
+export default function Settings({ onBack, onLogout }) {
   return (
     <View style={styles.screen}>
       <StatusBar style="dark" backgroundColor="#000" />
@@ -37,6 +38,7 @@ export default function Settings({ onBack }: { onBack?: () => void }) {
             <View style={styles.section}>
               <Text style={styles.label}>App Settings</Text>
               <Privacy />
+              <AccountSettings onLogout={onLogout} />
             </View>
         </View>
       </ScrollView>

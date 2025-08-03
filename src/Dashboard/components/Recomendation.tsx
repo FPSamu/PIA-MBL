@@ -1,16 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFonts, Inter_600SemiBold, Inter_500Medium, Inter_400Regular } from '@expo-google-fonts/inter';
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
+import { supabase } from '../../onboarding/services/supabaseClient';
+import { ensureValidSession } from '../../services/session';
 
-type MessageCategory = 'excessive_expenses' | 'recurrent_expenses' | 'saving_opportunities';
+type MessageCategory = 'excessive_expenses' | 'recurrent_expenses' | 'saving_opportunities' | 'no_transactions';
 
-interface RecommendationsProps {
+interface Recommendation {
+  id: number;
   title: string;
   description: string;
-  category: MessageCategory;
-  onHelpfulPress?: () => void;
-  onNotForMePress?: () => void;
+  type: MessageCategory;
+  useful: boolean | null;
 }
 
 const CATEGORY_STYLES = {
@@ -32,24 +34,153 @@ const CATEGORY_STYLES = {
     titleColor: '#06BF8B',
     icon: (color: string) => <MaterialIcons name="savings" size={24} color={color} />,
   },
+  no_transactions: {
+    iconColor: '#6366F1',
+    circleColor: '#A5B4FC80',
+    titleColor: '#6366F1',
+    icon: (color: string) => <MaterialIcons name="receipt-long" size={24} color={color} />,
+  },
 };
 
-export default function Recommendations({ 
-  title, 
-  description, 
-  category, 
-  onHelpfulPress, 
-  onNotForMePress 
-}: RecommendationsProps) {
+export default function Recommendations() {
   const [fontsLoaded] = useFonts({
     Inter_600SemiBold,
     Inter_500Medium,
     Inter_400Regular,
   });
 
+  const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchRecommendation();
+  }, []);
+
+  const fetchRecommendation = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const session = await ensureValidSession();
+      if (!session?.user?.id) {
+        setError('No se pudo verificar la sesión');
+        return;
+      }
+
+      const { data, error: fetchError } = await supabase
+        .from('recommendations')
+        .select('*')
+        .eq('uid', session.user.id)
+        .is('useful', null)
+        .limit(1)
+        .single();
+
+      if (fetchError) {
+        if (fetchError.code === 'PGRST116') {
+          // No hay recomendaciones pendientes
+          setRecommendation(null);
+        } else {
+          console.error('Error fetching recommendation:', fetchError);
+          setError('Error al cargar la recomendación');
+        }
+      } else {
+        setRecommendation(data);
+      }
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      setError('Error inesperado al cargar la recomendación');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFeedback = async (isUseful: boolean) => {
+    if (!recommendation) return;
+
+    try {
+      const session = await ensureValidSession();
+      const { error: updateError } = await supabase
+        .from('recommendations')
+        .update({ useful: isUseful })
+        .eq('uid', session.user.id)
+        .is('useful', null);
+
+      if (updateError) {
+        console.error('Error updating recommendation:', updateError);
+        setError('Error al actualizar la recomendación');
+        return;
+      }
+
+      fetchRecommendation();
+    } catch (error) {
+      console.error('Unexpected error updating recommendation:', error);
+      setError('Error inesperado al actualizar');
+    }
+  };
+
+  const handleHelpfulPress = () => {
+    handleFeedback(true);
+  };
+
+  const handleNotForMePress = () => {
+    handleFeedback(false);
+  };
+
   if (!fontsLoaded) return null;
 
-  const categoryStyle = CATEGORY_STYLES[category];
+  if (loading) {
+    return (
+      <View>
+        <Text style={styles.sectionTitle}>New Recommendation</Text>
+        <View style={styles.container}>
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading recommendation...</Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View>
+        <Text style={styles.sectionTitle}>New Recommendation</Text>
+        <View style={styles.container}>
+          <View style={styles.errorContainer}>
+            <MaterialIcons name="error-outline" size={24} color="#FC3838" />
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity 
+              style={styles.retryButton} 
+              onPress={fetchRecommendation}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  if (!recommendation) {
+    return (
+      <View>
+        <Text style={styles.sectionTitle}>New Recommendation</Text>
+        <View style={styles.container}>
+          <View style={styles.noRecommendationContainer}>
+            <MaterialIcons name="check-circle" size={48} color="#06BF8B" />
+            <Text style={styles.noRecommendationTitle}>All caught up!</Text>
+            <Text style={styles.noRecommendationText}>
+              No new recommendations at the moment. Keep using the app and we'll provide more insights.
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  const categoryStyle = CATEGORY_STYLES[recommendation.type];
 
   return (
     <View>
@@ -60,11 +191,13 @@ export default function Recommendations({
           <View style={[styles.iconCircle, { backgroundColor: categoryStyle.circleColor }]}>
             {categoryStyle.icon(categoryStyle.iconColor)}
           </View>
-          <Text style={[styles.title, { color: categoryStyle.titleColor }]}>{title}</Text>
+          <Text style={[styles.title, { color: categoryStyle.titleColor }]}>
+            {recommendation.title}
+          </Text>
         </View>
 
         {/* Descripción */}
-        <Text style={styles.description}>{description}</Text>
+        <Text style={styles.description}>{recommendation.description}</Text>
 
         {/* Separador */}
         <View style={styles.separator} />
@@ -73,7 +206,7 @@ export default function Recommendations({
         <View style={styles.buttonContainer}>
           <TouchableOpacity 
             style={[styles.button, styles.helpfulButton]} 
-            onPress={onHelpfulPress}
+            onPress={handleHelpfulPress}
             activeOpacity={0.7}
           >
             <MaterialIcons name="thumb-up" size={16} color="#06BF8B" />
@@ -82,7 +215,7 @@ export default function Recommendations({
 
           <TouchableOpacity 
             style={[styles.button, styles.notForMeButton]} 
-            onPress={onNotForMePress}
+            onPress={handleNotForMePress}
             activeOpacity={0.7}
           >
             <MaterialIcons name="thumb-down" size={16} color="#757575" />
@@ -101,7 +234,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: 600,
     fontFamily: 'Inter_600SemiBold',
-    color: 'red'
+    color: '#1c1c1c'
   },
   container: {
     backgroundColor: '#fff',
@@ -184,34 +317,67 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontSize: 14,
   },
+  
+  // Estilos para estados de carga y error
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 120,
+  },
+  loadingText: {
+    color: '#757575',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 120,
+  },
+  errorText: {
+    color: '#FC3838',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  retryButton: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#06BF8B',
+    fontFamily: 'Inter_500Medium',
+    fontWeight: '500',
+    fontSize: 14,
+  },
+  noRecommendationContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 120,
+    paddingVertical: 16,
+  },
+  noRecommendationTitle: {
+    color: '#1c1c1c',
+    fontFamily: 'Inter_600SemiBold',
+    fontWeight: '600',
+    fontSize: 18,
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  noRecommendationText: {
+    color: '#757575',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
 });
-
-// Ejemplo de uso:
-/*
-// Gastos excesivos
-<Recommendations
-  title="High dining expenses detected"
-  description="You've spent $450 on restaurants this month, which is 80% above your usual average. Consider cooking at home more often."
-  category="excessive_expenses"
-  onHelpfulPress={() => console.log('Helpful pressed')}
-  onNotForMePress={() => console.log('Not for me pressed')}
-/>
-
-// Gastos recurrentes
-<Recommendations
-  title="Monthly subscriptions review"
-  description="You have 8 active subscriptions totaling $127/month. Consider canceling unused services like that gym membership you haven't used in 3 months."
-  category="recurrent_expenses"
-  onHelpfulPress={() => console.log('Helpful pressed')}
-  onNotForMePress={() => console.log('Not for me pressed')}
-/>
-
-// Oportunidades de ahorro
-<Recommendations
-  title="Increase your savings potential"
-  description="Based on your income and expenses, you could save an additional $200 monthly by setting up an automatic transfer to your savings account."
-  category="saving_opportunities"
-  onHelpfulPress={() => console.log('Helpful pressed')}
-  onNotForMePress={() => console.log('Not for me pressed')}
-/>
-*/

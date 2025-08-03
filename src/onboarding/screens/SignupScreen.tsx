@@ -74,7 +74,6 @@ export default function SignupScreen({ onSignup, onSwitchToLogin, onVerification
             console.error('SAVINGS_INFO error:', savingsError);
             Alert.alert('DB Error', 'SAVINGS_INFO: ' + savingsError.message);
           }
-
           // User Balance
           const { error: balanceError } = await supabase.from('user_balance').upsert({
             uid: userId,
@@ -84,65 +83,6 @@ export default function SignupScreen({ onSignup, onSwitchToLogin, onVerification
             console.error('USER_BALANCE error:', balanceError);
             Alert.alert('DB Error', 'USER_BALANCE: ' + balanceError.message);
           }
-
-          // // Accounts
-          // const { error: accountsError } = await supabase.from('accounts').upsert({
-          //   uid: userId,
-          //   account_name: 'cash',
-          //   title: 'Cash',
-          //   balance: 0,
-          // });
-          // console.log('Cash account creation result:', { error: accountsError });
-          // if (accountsError) {
-          //   console.error('ACCOUNTS error:', accountsError);
-          //   Alert.alert('DB Error', 'ACCOUNTS: ' + accountsError.message);
-          // }
-          // // Add credit_card and savings accounts
-          // const { error: creditCardError } = await supabase.from('accounts').upsert({
-          //   uid: userId,
-          //   account_name: 'credit_card',
-          //   title: 'Credit card',
-          //   balance: 0,
-          // });
-          // console.log('Credit card account creation result:', { error: creditCardError });
-          // if (creditCardError) {
-          //   console.error('CREDIT_CARD error:', creditCardError);
-          //   Alert.alert('DB Error', 'CREDIT_CARD: ' + creditCardError.message);
-          // }
-          // const { error: savingsAccountError } = await supabase.from('accounts').upsert({
-          //   uid: userId,
-          //   account_name: 'savings',
-          //   title: 'Savings',
-          //   balance: 0,
-          // });
-          // console.log('Savings account creation result:', { error: savingsAccountError });
-          // if (savingsAccountError) {
-          //   console.error('SAVINGS_ACCOUNT error:', savingsAccountError);
-          //   Alert.alert('DB Error', 'SAVINGS_ACCOUNT: ' + savingsAccountError.message);
-          // }
-          
-          // // Categories
-          // const categories = [
-          //   { name: 'Groceries', color: '#388E3C' },
-          //   { name: 'Restaurant', color: '#FF9800' },
-          //   { name: 'Transport', color: '#1976D2' },
-          //   { name: 'House', color: '#7C4DFF' },
-          //   { name: 'Shopping', color: '#FF5722' },
-          //   { name: 'Gas', color: '#FBC02D' },
-          //   { name: 'Income', color: '#00B383' },
-          // ];
-          
-          // for (const category of categories) {
-          //   const { error: categoryError } = await supabase.from('categories').upsert({
-          //     uid: userId,
-          //     name: category.name,
-          //     color: category.color,
-          //   });
-          //   if (categoryError) {
-          //     console.error(`CATEGORY ${category.name} error:`, categoryError);
-          //     Alert.alert('DB Error', `CATEGORY ${category.name}: ` + categoryError.message);
-          //   }
-          // }
         }
         if (onVerificationRequired) {
           onVerificationRequired();
