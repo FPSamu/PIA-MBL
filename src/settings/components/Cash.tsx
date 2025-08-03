@@ -19,26 +19,29 @@ export default function Cash() {
           setLoading(false);
           return;
         }
-  
+
         const { data, error } = await supabase
           .from("accounts")
           .select("balance, title")
           .eq("uid", session.user.id)
           .eq("account_name", 'cash')
-          .limit(1)
-          .single();
-  
-        if (error || !data) {
+          .maybeSingle();
+
+        if (error) {
           console.error("Error fetching cash amount:", error);
           setCashAmount(null);
+          setCashTitle(null);
+        } else if (!data) {
+          setCashAmount(null);
+          setCashTitle(null);
         } else {
           setCashAmount(data.balance);
           setCashTitle(data.title);
         }
-  
+
         setLoading(false);
       };
-  
+
       fetchCashAmount();
     }, []);
 
@@ -72,7 +75,13 @@ export default function Cash() {
                 <View style={styles.textContainer}>
                     <Text style={styles.buttonTitle}>Cash</Text>
                     <Text style={styles.buttonAmount}>
-                      {loading || cashAmount === null ? 'Loading...' : `$${cashAmount.toLocaleString()}`}
+                      {loading
+                        ? 'Loading...'
+                        : cashAmount === null
+                          ? 'No cash account found. Add a transaction to get started!'
+                          : `$${cashAmount.toLocaleString()}`
+                      }
+
                     </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color="#ccc" />

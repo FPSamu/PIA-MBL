@@ -21,15 +21,19 @@ export default function GoalsScreen({ onContinue, selectedGoal, setSelectedGoal,
     } else {
       setSelectedGoal(goalId);
       setCustomGoal(''); // Clear custom goal if a predefined goal is selected
-      setCustomAmount('');
     }
   };
 
   const handleCustomGoalChange = (goal: string, amount?: string) => {
     setCustomGoal(goal);
     setCustomAmount(amount || '');
-    setSelectedGoal(null); // Clear selected goal if a custom goal is set
+
+    // Solo limpiar selectedGoal si el usuario escribe algo en el campo de meta personalizada
+    if (goal.trim() !== '') {
+      setSelectedGoal(null);
+    }
   };
+
 
   const canContinue = Boolean(selectedGoal) || Boolean(customGoal.trim());
 

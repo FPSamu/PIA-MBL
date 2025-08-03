@@ -26,16 +26,19 @@ export default function Credit() {
             .eq("uid", session.user.id)
             .eq("account_name", 'credit_card')
             .limit(1)
-            .single();
+            .maybeSingle();
     
-          if (error || !data) {
-            console.error("Error fetching credit amount:", error);
+          if (error) {
+            console.error("Error fetching cash amount:", error);
             setCreditAmount(null);
+          } else if (!data) {
+            setCreditAmount(null);
+            setCreditTitle(null);
           } else {
             setCreditAmount(data.balance);
             setCreditTitle(data.title);
           }
-    
+
           setLoading(false);
         };
     
@@ -72,7 +75,12 @@ export default function Credit() {
             <View style={styles.textContainer}>
                 <Text style={styles.buttonTitle}>Credit Card</Text>
                 <Text style={styles.buttonAmount}>
-                  {loading || creditAmount === null ? 'Loading...' : `$${creditAmount.toLocaleString()}`}
+                  {loading
+                    ? 'Loading...'
+                    : creditAmount === null
+                      ? 'No credit account found. Add a transaction to get started!'
+                      : `$${creditAmount.toLocaleString()}`
+                  }
                 </Text>
             </View>
                 <Ionicons name="chevron-forward" size={20} color="#ccc" />

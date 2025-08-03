@@ -26,11 +26,14 @@ export default function Savings() {
             .eq("uid", session.user.id)
             .eq("account_name", 'savings')
             .limit(1)
-            .single();
+            .maybeSingle();
     
-          if (error || !data) {
-            console.error("Error fetching savings amount:", error);
+          if (error) {
+            console.error("Error fetching cash amount:", error);
             setSavingsAmount(null);
+          } else if (!data ) {
+            setSavingsAmount(null);
+            setSavingsTitle(null);
           } else {
             setSavingsAmount(data.balance);
             setSavingsTitle(data.title);
@@ -72,7 +75,12 @@ export default function Savings() {
                 <View style={styles.textContainer}>
                     <Text style={styles.buttonTitle}>Savings</Text>
                     <Text style={styles.buttonAmount}>
-                      {loading || savingsAmount === null ? 'Loading...' : `$${savingsAmount.toLocaleString()}`}
+                      {loading
+                        ? 'Loading...'
+                        : savingsAmount === null
+                          ? 'No savings account found. Add a transaction to get started!'
+                          : `$${savingsAmount.toLocaleString()}`
+                      }
                     </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color="#ccc" />

@@ -35,7 +35,7 @@ const TreeGrowthSection: React.FC<TreeGrowthSectionProps> = ({
         .select("goal_amount")
         .eq("uid", session.user.id) // ✅ filtrado por usuario
         .limit(1)
-        .single();
+        .maybeSingle();
 
       const { data: accountData, error: accountError } = await supabase
         .from("accounts")
@@ -43,22 +43,26 @@ const TreeGrowthSection: React.FC<TreeGrowthSectionProps> = ({
         .eq("account_name", "savings")
         .eq("uid", session.user.id) // ✅ filtrado por usuario
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (goalError || accountError || !goalData || !accountData) {
         console.error("Error fetching data", goalError, accountError);
         setPercentage(null);
       } else {
         const { goal_amount } = goalData;
-        const { balance } = accountData;
+        const balance = accountData?.balance ?? 0;
 
-        const calc =
-          goal_amount === 0
-            ? 100
-            : Math.round((balance * 10000) / goal_amount) / 100;
+        if (!accountData || balance === 0) {
+          setPercentage(0); // O puedes dejarlo en null si prefieres
+        } else {
+          const calc =
+            goal_amount === 0
+              ? 100
+              : Math.round((balance * 10000) / goal_amount) / 100;
 
-        setPercentage(calc);
-        setCurrentPercentage(calc);
+          setPercentage(calc);
+          setCurrentPercentage(calc);
+        }
       }
 
       setLoading(false);
@@ -95,10 +99,17 @@ const TreeGrowthSection: React.FC<TreeGrowthSectionProps> = ({
     <View style={styles.container}>
       <Text style={styles.title}>Savings</Text>
 
-      {loading || percentage === null ? (
+      {loading ? (
         <Text>Loading...</Text>
+      ) : percentage === null || percentage === 0 ? (
+        <View style={styles.card}>
+          <Text style={styles.noSavingsText}>
+            No savings registered yet. Add a transaction to start growing your tree!
+          </Text>
+        </View>
       ) : (
         <View style={styles.card}>
+          {/* Árbol y porcentaje normal */}
           <View style={styles.progressInfo}>
             <View style={styles.percentageContainer}>
               <Text style={styles.percentageText}>
@@ -106,12 +117,9 @@ const TreeGrowthSection: React.FC<TreeGrowthSectionProps> = ({
               </Text>
             </View>
           </View>
-
           <View style={styles.treeWrapper}>
             <View style={styles.treeContainer}>
-              <TreeGrowth
-                percentage={currentPercentage}
-              />
+              <TreeGrowth percentage={currentPercentage} />
             </View>
           </View>
         </View>
@@ -125,6 +133,13 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 8,
     paddingHorizontal: 24,
+  },
+  noSavingsText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    fontFamily: 'Inter_400Regular',
+    padding: 12,
   },
   title: {
     color: "#1c1c1c",

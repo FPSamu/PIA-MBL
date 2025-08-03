@@ -3,7 +3,7 @@ import { View, TextInput, Text, StyleSheet } from 'react-native';
 
 interface ManualGoalProps {
   onChange?: (goal: string, amount?: string) => void;
-  disabled?: boolean;
+  disabled?: boolean; // true si hay una meta predefinida seleccionada
   value?: string;
   amount?: string;
 }
@@ -44,6 +44,7 @@ const ManualGoal: React.FC<ManualGoalProps> = ({ onChange, disabled, value, amou
           </View>
         )}
       </View>
+
       <Text style={styles.label}>Target Amount (optional)</Text>
       <TextInput
         style={styles.input}
@@ -52,7 +53,7 @@ const ManualGoal: React.FC<ManualGoalProps> = ({ onChange, disabled, value, amou
         value={amountValue}
         onChangeText={handleAmountChange}
         keyboardType="numeric"
-        editable={true}
+        editable={true} // ✅ Siempre editable
       />
     </View>
   );
