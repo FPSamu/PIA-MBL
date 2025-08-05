@@ -31,6 +31,27 @@ export default function AddTransactionScreen({ onClose, onTransactionAdded, onNa
   const [account, setAccount] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
+  // Function to convert MM/DD/YYYY date string to timestamp
+  const dateStringToTimestamp = (dateString: string): string => {
+    try {
+      const [month, day, year] = dateString.split('/');
+      const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      
+      // Set time to current time to preserve the exact moment of creation
+      const now = new Date();
+      dateObj.setHours(now.getHours());
+      dateObj.setMinutes(now.getMinutes());
+      dateObj.setSeconds(now.getSeconds());
+      dateObj.setMilliseconds(now.getMilliseconds());
+      
+      return dateObj.toISOString();
+    } catch (error) {
+      console.error('Error converting date to timestamp:', error);
+      // Fallback to current timestamp
+      return new Date().toISOString();
+    }
+  };
+
   const handleSave = async () => {
     if (!isFormValid) return;
     
@@ -44,8 +65,10 @@ export default function AddTransactionScreen({ onClose, onTransactionAdded, onNa
 
       const authenticatedSupabase = await getAuthenticatedSupabase();
       
-      // Prepare transaction data
+      // Prepare transaction data with timestamp
       const amt = parseFloat(amount);
+      const timestamp = dateStringToTimestamp(date);
+      
       const transactionData = {
         uid: session.user.id,
         category: category,
@@ -53,8 +76,14 @@ export default function AddTransactionScreen({ onClose, onTransactionAdded, onNa
         title: title.trim() || category, // Use category as title if title is empty
         account: account,
         amount: type === 'Expenses' ? -Math.abs(amt) : Math.abs(amt),
-        date: date,
+        date: timestamp, // Now saving as timestamp
       };
+
+      console.log('Saving transaction with timestamp:', {
+        originalDate: date,
+        timestamp: timestamp,
+        transactionData
+      });
 
       // Insert transaction
       const { error: txError } = await authenticatedSupabase

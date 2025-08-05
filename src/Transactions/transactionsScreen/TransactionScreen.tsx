@@ -10,6 +10,36 @@ export default function TransactionScreen({ onBack }: { onBack?: () => void }) {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Function to format timestamp to readable date string
+  const formatTimestampToDate = (timestamp: string): string => {
+    try {
+      const date = new Date(timestamp);
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${month}/${day}/${year}`;
+    } catch (error) {
+      console.error('Error formatting timestamp:', error);
+      return timestamp; // Fallback to original value
+    }
+  };
+
+  // Function to format timestamp to readable date and time string
+  const formatTimestampToDateTime = (timestamp: string): string => {
+    try {
+      const date = new Date(timestamp);
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const year = date.getFullYear();
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${month}/${day}/${year} ${hours}:${minutes}`;
+    } catch (error) {
+      console.error('Error formatting timestamp to datetime:', error);
+      return timestamp; // Fallback to original value
+    }
+  };
+
   useEffect(() => {
     const fetchTransactions = async () => {
       setLoading(true);
@@ -19,18 +49,31 @@ export default function TransactionScreen({ onBack }: { onBack?: () => void }) {
         setLoading(false);
         return;
       }
+      
+      // Order by timestamp (date column) in descending order for newest first
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
         .eq('uid', session.user.id)
         .order('date', { ascending: false });
+        
       if (error || !data) {
+        console.error('Error fetching transactions:', error);
         setTransactions([]);
       } else {
-        setTransactions(data);
+        // Process transactions to format dates
+        const processedTransactions = data.map(transaction => ({
+          ...transaction,
+          formattedDate: formatTimestampToDate(transaction.date),
+          formattedDateTime: formatTimestampToDateTime(transaction.date)
+        }));
+        
+        console.log('Fetched transactions with timestamps:', processedTransactions.slice(0, 2)); // Log first 2 for debugging
+        setTransactions(processedTransactions);
       }
       setLoading(false);
     };
+    
     fetchTransactions();
   }, []);
 
@@ -57,7 +100,7 @@ export default function TransactionScreen({ onBack }: { onBack?: () => void }) {
                   title={item.title}
                   account={item.account}
                   category={item.category}
-                  date={item.date}
+                  date={item.formattedDate} // Use formatted date for display
                   amount={
                     item.amount < 0
                       ? `-$${Math.abs(item.amount).toLocaleString()}`
@@ -79,7 +122,7 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: '#F5F6FA',
-    paddingTop: 48,
+    paddingVertical: 48,
   },
   header: {
     flexDirection: 'row',

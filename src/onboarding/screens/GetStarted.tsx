@@ -54,8 +54,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   icon: {
-    width: 240,
-    height: 240,
+    width: 250,
+    height: 235,
   },
   getStartedButton: {
     flexDirection: 'row',
