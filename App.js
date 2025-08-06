@@ -2,6 +2,8 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, Modal, Animated, Easing, Platform, Dimensions } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { getSession, ensureValidSession, initializeSessionListener } from './src/services/session';
+import { checkUserPremiumAccess } from './src/services/userPermissions';
+import { initializeRevenueCat, setUserId } from './src/services/revenueCat';
 import GetStarted from './src/onboarding/screens/GetStarted';
 import FeaturesScreen from './src/onboarding/screens/FeaturesScreen';
 import GoalsScreen from './src/onboarding/screens/GoalsScreen';
@@ -9,6 +11,7 @@ import AboutUserScreen from './src/onboarding/screens/AboutUserScreen';
 import SignupScreen from './src/onboarding/screens/SignupScreen';
 import LoginScreen from './src/onboarding/screens/LoginScreen';
 import SplashScreen from './src/onboarding/screens/SplashScreen';
+import SubscriptionScreen from './src/onboarding/screens/SubscriptionScreen';
 import Dashboard from './src/Dashboard/Dashboard';
 import ProgressBar from './src/onboarding/components/ProgressBar';
 import Navbar from './src/navbar/Navbar';
@@ -23,6 +26,8 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('getStarted');
   const [checkingSession, setCheckingSession] = useState(true);
+  const [checkingUserAccess, setCheckingUserAccess] = useState(false);
+  const [revenueCatInitialized, setRevenueCatInitialized] = useState(false);
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
@@ -32,6 +37,23 @@ export default function App() {
   const [customAmount, setCustomAmount] = useState('');
   const [aboutAnswers, setAboutAnswers] = useState({ source: null, goal: null });
   const [dashboardRefresh, setDashboardRefresh] = useState(0);
+
+  // Inicializar RevenueCat al cargar la app
+  useEffect(() => {
+    const setupRevenueCat = async () => {
+      try {
+        await initializeRevenueCat();
+        setRevenueCatInitialized(true);
+        console.log('✅ RevenueCat initialized in App.js');
+      } catch (error) {
+        console.error('❌ Failed to initialize RevenueCat:', error);
+        // Continuar sin RevenueCat en caso de error
+        setRevenueCatInitialized(false);
+      }
+    };
+
+    setupRevenueCat();
+  }, []);
 
   useEffect(() => {
     const restoreSession = async () => {
@@ -46,12 +68,52 @@ export default function App() {
   
       const validSession = await ensureValidSession();
       if (validSession) {
-        setCurrentScreen('dashboard');
+        // Configurar user ID en RevenueCat si está inicializado
+        if (revenueCatInitialized && validSession.user?.id) {
+          try {
+            await setUserId(validSession.user.id);
+          } catch (error) {
+            console.log('Warning: Could not set RevenueCat user ID:', error);
+          }
+        }
+        
+        // Si hay sesión válida, verificar acceso del usuario
+        await checkAndNavigateUserAccess();
       }
       setCheckingSession(false);
     };
-    restoreSession();
-  }, []);
+
+    // Solo restaurar sesión si RevenueCat ya está inicializado o falló
+    if (revenueCatInitialized !== null) {
+      restoreSession();
+    }
+  }, [revenueCatInitialized]);
+
+  // Función principal para verificar acceso del usuario (ahora incluye RevenueCat)
+  const checkAndNavigateUserAccess = async () => {
+    setCheckingUserAccess(true);
+    
+    try {
+      console.log('🔍 Checking user access...');
+      
+      // Usar la función actualizada que verifica tanto lifetime premium como RevenueCat
+      const accessResult = await checkUserPremiumAccess();
+      
+      if (accessResult.hasAccess) {
+        console.log(`✅ Access granted - Type: ${accessResult.type}, Source: ${accessResult.source}`);
+        setCurrentScreen('dashboard');
+      } else {
+        console.log('❌ No access found - Showing subscription screen');
+        setCurrentScreen('subscription');
+      }
+    } catch (error) {
+      console.error('Error checking user access:', error);
+      // En caso de error, mostrar subscription screen por seguridad
+      setCurrentScreen('subscription');
+    }
+    
+    setCheckingUserAccess(false);
+  };
 
   useEffect(() => {
     if (showAddTransaction) {
@@ -74,10 +136,21 @@ export default function App() {
   const handleShowAddTransaction = () => setShowAddTransaction(true);
   const handleCloseAddTransaction = () => setShowAddTransaction(false);
 
+  // Función para manejar el éxito de la suscripción
+  const handleSubscriptionSuccess = async () => {
+    console.log('🎉 Subscription successful!');
+    
+    // Verificar nuevamente el acceso después de la compra exitosa
+    await checkAndNavigateUserAccess();
+  };
 
   let content = null;
 
   if (checkingSession) {
+    // Podrías mostrar un SplashScreen o loading aquí
+    content = null;
+  } else if (checkingUserAccess) {
+    // Podrías mostrar un loading específico para verificación de acceso
     content = null;
   } else if (currentScreen === 'getStarted') {
     content = <GetStarted onGetStarted={navigateToFeatures} onLoginPress={navigateToLogin} />;
@@ -88,11 +161,13 @@ export default function App() {
   } else if (currentScreen === 'about') {
     content = <AboutUserScreen onContinue={navigateToSignup} answers={aboutAnswers} setAnswers={setAboutAnswers} />;
   } else if (currentScreen === 'login') {
-    content = <LoginScreen onLogin={navigateToDashboard} onSwitchToSignup={navigateToFeatures} />;
+    content = <LoginScreen onLogin={checkAndNavigateUserAccess} onSwitchToSignup={navigateToFeatures} />;
   } else if (currentScreen === 'signup') {
-    content = <SignupScreen onSignup={navigateToDashboard} onSwitchToLogin={navigateToLogin} onVerificationRequired={navigateToSplash} onboardingData={{ selectedFeature, selectedGoal, customGoal, customAmount, aboutAnswers }} />;
+    content = <SignupScreen onSignup={checkAndNavigateUserAccess} onSwitchToLogin={navigateToLogin} onVerificationRequired={navigateToSplash} onboardingData={{ selectedFeature, selectedGoal, customGoal, customAmount, aboutAnswers }} />;
   } else if (currentScreen === 'splash') {
-    content = <SplashScreen onVerified={navigateToDashboard} />;
+    content = <SplashScreen onVerified={checkAndNavigateUserAccess} />;
+  } else if (currentScreen === 'subscription') {
+    content = <SubscriptionScreen onSubscriptionSuccess={handleSubscriptionSuccess} />;
   } else if (currentScreen === 'dashboard') {
     content = <Dashboard onLogout={() => setCurrentScreen('getStarted')} refreshKey={dashboardRefresh} onSeeAll={navigateToTransactions} />;
   } else if (currentScreen === 'transactions') {

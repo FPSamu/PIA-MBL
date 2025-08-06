@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,84 +7,200 @@ import {
   SafeAreaView,
   ScrollView,
   Alert,
-  StatusBar
+  ActivityIndicator
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { getProducts, purchaseSubscription, restorePurchases, PRODUCT_IDS } from '../../services/revenueCat';
 
 const SubscriptionScreen = ({ onSubscriptionSuccess }) => {
-  const [selectedPlan, setSelectedPlan] = useState('annual'); // Default to annual (better value)
+  const [selectedPlan, setSelectedPlan] = useState('annual');
+  const [loading, setLoading] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
 
-  const plans = [
-    {
-      id: 'monthly',
-      title: 'Monthly',
-      price: '$6',
-      period: '/month',
-      description: 'Perfect for trying out PIA',
-      features: [
-        'Full access to all features',
-        '7-day free trial',
-        'Cancel anytime',
-        '24/7 support'
-      ],
-      savings: null,
-      pricePerMonth: 6,
-    },
-    {
-      id: 'annual',
-      title: 'Annual',
-      price: '$50',
-      period: '/year',
-      description: 'Best value - Save 30%',
-      features: [
-        'Full access to all features',
-        '7-day free trial',
-        'Cancel anytime',
-        '24/7 priority support',
-      ],
-      savings: 'Save $22/year',
-      pricePerMonth: 4.17,
-      popular: true,
+  // Cargar productos de RevenueCat al montar el componente
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      setLoadingProducts(true);
+      console.log('Loading products from RevenueCat...');
+      
+      const revenueCatProducts = await getProducts();
+      
+      if (revenueCatProducts && revenueCatProducts.length > 0) {
+        console.log('Products loaded:', revenueCatProducts);
+        setProducts(revenueCatProducts);
+      } else {
+        console.log('No products found, using default configuration');
+        // Si no hay productos de RevenueCat, mantener configuración por defecto
+      }
+    } catch (error) {
+      console.error('Error loading products:', error);
+      Alert.alert('Error', 'Could not load subscription plans. Please try again.');
+    } finally {
+      setLoadingProducts(false);
     }
-  ];
+  };
+
+  // Crear planes basados en productos de RevenueCat o configuración por defecto
+  const createPlans = () => {
+    const defaultPlans = [
+      {
+        id: 'monthly',
+        productId: PRODUCT_IDS.monthly,
+        title: 'Monthly',
+        price: '$6',
+        period: '/month',
+        description: 'Perfect for trying out PIA',
+        features: [
+          'Full access to all features',
+          '7-day free trial',
+          'Cancel anytime',
+          '24/7 support'
+        ],
+        savings: null,
+        pricePerMonth: 6,
+      },
+      {
+        id: 'annual',
+        productId: PRODUCT_IDS.annual,
+        title: 'Annual',
+        price: '$50',
+        period: '/year',
+        description: 'Best value - Save 30%',
+        features: [
+          'Full access to all features',
+          '7-day free trial',
+          'Cancel anytime',
+          '24/7 priority support',
+        ],
+        savings: 'Save $22/year',
+        pricePerMonth: 4.17,
+        popular: true,
+      }
+    ];
+
+    // Si tenemos productos de RevenueCat, actualizar precios
+    if (products.length > 0) {
+      return defaultPlans.map(plan => {
+        const revenueCatProduct = products.find(p => p.identifier === plan.productId);
+        if (revenueCatProduct) {
+          return {
+            ...plan,
+            price: revenueCatProduct.priceString,
+            priceValue: revenueCatProduct.price,
+            currency: revenueCatProduct.currencyCode,
+            revenueCatProduct
+          };
+        }
+        return plan;
+      });
+    }
+
+    return defaultPlans;
+  };
+
+  const plans = createPlans();
 
   const handlePlanSelect = (planId) => {
     setSelectedPlan(planId);
   };
 
   const handleSubscribe = async () => {
-    const plan = plans.find(p => p.id === selectedPlan);
-    // Here you'll implement the actual subscription logic with Apple/Google Pay
+    const selectedPlanData = plans.find(p => p.id === selectedPlan);
     
+    if (!selectedPlanData) {
+      Alert.alert('Error', 'Please select a plan');
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      // This is where you'll integrate with expo-in-app-purchases
-      // For now, we'll simulate a successful subscription
-      Alert.alert(
-        'Start Subscription',
-        `You selected the ${plan.title} plan (${plan.price}${plan.period}). This will start your 7-day free trial.`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Continue', 
-            onPress: async () => {
-              // Simulate successful subscription
-              console.log('Starting subscription...');
-              // After successful subscription, call the success callback
-              onSubscriptionSuccess?.();
+      console.log(`Starting subscription for: ${selectedPlanData.productId}`);
+
+      // Usar RevenueCat para realizar la compra
+      const result = await purchaseSubscription(selectedPlanData.productId);
+
+      if (result.success && result.hasActiveSubscription) {
+        Alert.alert(
+          'Success! 🎉',
+          'Your subscription is now active. Welcome to PIA Premium!',
+          [
+            {
+              text: 'Continue',
+              onPress: () => onSubscriptionSuccess?.()
             }
-          }
-        ]
-      );
+          ]
+        );
+      } else if (result.error === 'cancelled') {
+        // Usuario canceló, no mostrar error
+        console.log('Purchase cancelled by user');
+      } else {
+        Alert.alert(
+          'Purchase Failed',
+          result.message || 'Could not complete the purchase. Please try again.',
+          [{ text: 'OK' }]
+        );
+      }
     } catch (error) {
       console.error('Subscription error:', error);
-      Alert.alert('Error', 'Failed to start subscription. Please try again.');
+      Alert.alert(
+        'Error',
+        'An unexpected error occurred. Please try again or contact support.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleRestore = () => {
-    // Implement restore purchases logic
-    Alert.alert('Restore Purchases', 'Checking for existing purchases...');
+  const handleRestore = async () => {
+    setLoading(true);
+
+    try {
+      console.log('Restoring purchases...');
+      
+      const result = await restorePurchases();
+
+      if (result.success && result.hasActiveSubscription) {
+        Alert.alert(
+          'Purchases Restored! 🎉',
+          'Your subscription has been restored successfully.',
+          [
+            {
+              text: 'Continue',
+              onPress: () => onSubscriptionSuccess?.()
+            }
+          ]
+        );
+      } else if (result.success) {
+        Alert.alert(
+          'No Active Subscription',
+          'No active subscriptions were found to restore.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert(
+          'Restore Failed',
+          result.error || 'Could not restore purchases. Please try again.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Restore error:', error);
+      Alert.alert(
+        'Error',
+        'Could not restore purchases. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const PlanCard = ({ plan }) => {
@@ -99,6 +215,7 @@ const SubscriptionScreen = ({ onSubscriptionSuccess }) => {
         ]}
         onPress={() => handlePlanSelect(plan.id)}
         activeOpacity={0.8}
+        disabled={loading}
       >
         {plan.popular && (
           <View style={styles.popularBadge}>
@@ -147,6 +264,23 @@ const SubscriptionScreen = ({ onSubscriptionSuccess }) => {
     );
   };
 
+  if (loadingProducts) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <LinearGradient
+          colors={['#667eea', '#764ba2']}
+          style={styles.header}
+        >
+          <Text style={styles.headerTitle}>Loading Plans...</Text>
+        </LinearGradient>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading subscription plans...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
@@ -158,6 +292,7 @@ const SubscriptionScreen = ({ onSubscriptionSuccess }) => {
           Start your 7-day free trial today
         </Text>
       </LinearGradient>
+      
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.trialBanner}>
           <Ionicons name="gift" size={24} color="#FF9500" />
@@ -173,26 +308,37 @@ const SubscriptionScreen = ({ onSubscriptionSuccess }) => {
         </View>
 
         <TouchableOpacity
-          style={styles.subscribeButton}
+          style={[styles.subscribeButton, loading && styles.disabledButton]}
           onPress={handleSubscribe}
           activeOpacity={0.8}
+          disabled={loading}
         >
           <LinearGradient
-            colors={['#007AFF', '#0051D5']}
+            colors={loading ? ['#A0A0A0', '#808080'] : ['#007AFF', '#0051D5']}
             style={styles.subscribeGradient}
           >
-            <Text style={styles.subscribeButtonText}>
-              Start Free Trial
-            </Text>
+            {loading ? (
+              <View style={styles.loadingButtonContent}>
+                <ActivityIndicator size="small" color="#FFFFFF" />
+                <Text style={styles.subscribeButtonText}>Processing...</Text>
+              </View>
+            ) : (
+              <Text style={styles.subscribeButtonText}>
+                Start Free Trial
+              </Text>
+            )}
           </LinearGradient>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.restoreButton}
+          style={[styles.restoreButton, loading && styles.disabledButton]}
           onPress={handleRestore}
           activeOpacity={0.6}
+          disabled={loading}
         >
-          <Text style={styles.restoreButtonText}>Restore Purchases</Text>
+          <Text style={[styles.restoreButtonText, loading && styles.disabledText]}>
+            Restore Purchases
+          </Text>
         </TouchableOpacity>
 
         <View style={styles.footer}>
@@ -210,6 +356,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
   },
   header: {
     paddingTop: 20,
@@ -380,6 +538,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
   },
+  disabledButton: {
+    opacity: 0.6,
+  },
   subscribeGradient: {
     paddingVertical: 16,
     alignItems: 'center',
@@ -388,6 +549,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
+  },
+  loadingButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   restoreButton: {
     alignItems: 'center',
@@ -398,6 +563,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#007AFF',
     fontWeight: '500',
+  },
+  disabledText: {
+    opacity: 0.5,
   },
   footer: {
     paddingBottom: 30,
