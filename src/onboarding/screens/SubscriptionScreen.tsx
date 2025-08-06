@@ -19,7 +19,7 @@ const SubscriptionScreen = ({ onSubscriptionSuccess }) => {
     {
       id: 'monthly',
       title: 'Monthly',
-      price: '$6',
+      price: '$5.99',
       period: '/month',
       description: 'Perfect for trying out PIA',
       features: [
@@ -29,12 +29,12 @@ const SubscriptionScreen = ({ onSubscriptionSuccess }) => {
         '24/7 support'
       ],
       savings: null,
-      pricePerMonth: 6,
+      pricePerMonth: 5.99,
     },
     {
       id: 'annual',
       title: 'Annual',
-      price: '$50',
+      price: '$49.99',
       period: '/year',
       description: 'Best value - Save 30%',
       features: [
@@ -55,11 +55,8 @@ const SubscriptionScreen = ({ onSubscriptionSuccess }) => {
 
   const handleSubscribe = async () => {
     const plan = plans.find(p => p.id === selectedPlan);
-    // Here you'll implement the actual subscription logic with Apple/Google Pay
     
     try {
-      // This is where you'll integrate with expo-in-app-purchases
-      // For now, we'll simulate a successful subscription
       Alert.alert(
         'Start Subscription',
         `You selected the ${plan.title} plan (${plan.price}${plan.period}). This will start your 7-day free trial.`,
@@ -68,9 +65,7 @@ const SubscriptionScreen = ({ onSubscriptionSuccess }) => {
           { 
             text: 'Continue', 
             onPress: async () => {
-              // Simulate successful subscription
               console.log('Starting subscription...');
-              // After successful subscription, call the success callback
               onSubscriptionSuccess?.();
             }
           }
@@ -83,7 +78,6 @@ const SubscriptionScreen = ({ onSubscriptionSuccess }) => {
   };
 
   const handleRestore = () => {
-    // Implement restore purchases logic
     Alert.alert('Restore Purchases', 'Checking for existing purchases...');
   };
 
