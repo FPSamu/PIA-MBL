@@ -9,6 +9,7 @@ import AboutUserScreen from './src/onboarding/screens/AboutUserScreen';
 import SignupScreen from './src/onboarding/screens/SignupScreen';
 import LoginScreen from './src/onboarding/screens/LoginScreen';
 import SplashScreen from './src/onboarding/screens/SplashScreen';
+import SubscriptionScreen from './src/onboarding/screens/SubscriptionScreen';
 import Dashboard from './src/Dashboard/Dashboard';
 import ProgressBar from './src/onboarding/components/ProgressBar';
 import Navbar from './src/navbar/Navbar';
@@ -46,7 +47,8 @@ export default function App() {
   
       const validSession = await ensureValidSession();
       if (validSession) {
-        setCurrentScreen('dashboard');
+        // Cambio aquí: ir a subscription en lugar de dashboard
+        setCurrentScreen('subscription');
       }
       setCheckingSession(false);
     };
@@ -74,7 +76,6 @@ export default function App() {
   const handleShowAddTransaction = () => setShowAddTransaction(true);
   const handleCloseAddTransaction = () => setShowAddTransaction(false);
 
-
   let content = null;
 
   if (checkingSession) {
@@ -88,11 +89,13 @@ export default function App() {
   } else if (currentScreen === 'about') {
     content = <AboutUserScreen onContinue={navigateToSignup} answers={aboutAnswers} setAnswers={setAboutAnswers} />;
   } else if (currentScreen === 'login') {
-    content = <LoginScreen onLogin={navigateToDashboard} onSwitchToSignup={navigateToFeatures} />;
+    content = <LoginScreen onLogin={navigateToSubscription} onSwitchToSignup={navigateToFeatures} />;
   } else if (currentScreen === 'signup') {
-    content = <SignupScreen onSignup={navigateToDashboard} onSwitchToLogin={navigateToLogin} onVerificationRequired={navigateToSplash} onboardingData={{ selectedFeature, selectedGoal, customGoal, customAmount, aboutAnswers }} />;
+    content = <SignupScreen onSignup={navigateToSubscription} onSwitchToLogin={navigateToLogin} onVerificationRequired={navigateToSplash} onboardingData={{ selectedFeature, selectedGoal, customGoal, customAmount, aboutAnswers }} />;
   } else if (currentScreen === 'splash') {
-    content = <SplashScreen onVerified={navigateToDashboard} />;
+    content = <SplashScreen onVerified={navigateToSubscription} />;
+  } else if (currentScreen === 'subscription') {
+    content = <SubscriptionScreen onSubscriptionSuccess={navigateToDashboard} />;
   } else if (currentScreen === 'dashboard') {
     content = <Dashboard onLogout={() => setCurrentScreen('getStarted')} refreshKey={dashboardRefresh} onSeeAll={navigateToTransactions} />;
   } else if (currentScreen === 'transactions') {
@@ -138,6 +141,7 @@ export default function App() {
   function navigateToAbout() { setCurrentScreen('about'); }
   function navigateToLogin() { setCurrentScreen('login'); }
   function navigateToSignup() { setCurrentScreen('signup'); }
+  function navigateToSubscription() { setCurrentScreen('subscription'); }
   function navigateToDashboard() {
     setDashboardRefresh(prev => prev + 1);
     setCurrentScreen('dashboard');
