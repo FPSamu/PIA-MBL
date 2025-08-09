@@ -1,17 +1,19 @@
 {
   "expo": {
     "name": "PIA",
-    "slug": "PIA",
-    "version": "1.0.2",
+    "slug": "pia",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.piaassistant.pia"
@@ -21,21 +23,18 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
-      "package": "com.piaassistant.pia",
-      "permissions": ["INTERNET"]
+      "package": "com.piaassistant.pia"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-router",
-      "expo-font"
+      "expo-router"
     ],
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "8e073233-e6dc-4ce8-a167-e9a1fdfb2c68"
+        "projectId": "3085a8d3-a648-47b8-9518-81ea18467e93"
       }
     }
   }
