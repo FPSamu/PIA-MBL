@@ -15,7 +15,7 @@ export default function DashboardHeader() {
     <View style={styles.container}>
       <Text style={styles.hello}>Hello!</Text>
       <View style={styles.iconCircle}>
-        <Image source={require('../../../assets/icon.png')} style={styles.icon} />
+        <Image source={require('../../../assets/logo.png')} style={styles.icon} />
       </View>
     </View>
   );

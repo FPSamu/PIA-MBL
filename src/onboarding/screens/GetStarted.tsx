@@ -18,7 +18,7 @@ export default function GetStarted({ onGetStarted, onLoginPress }: GetStartedPro
         />
         <Image 
           style={styles.icon}
-          source={require("../../../assets/icon.png")}
+          source={require("../../../assets/logo.png")}
         />
         
         <TouchableOpacity
@@ -54,8 +54,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   icon: {
-    width: 250,
-    height: 235,
+    marginTop: 16,
+    width: 220,
+    height: 205,
   },
   getStartedButton: {
     flexDirection: 'row',
