@@ -1,18 +1,19 @@
 {
   "cli": {
-    "version": ">= 16.13.4",
-    "appVersionSource": "remote"
+    "version": ">= 12.0.0"
   },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "prebuildCommand": "npx expo prebuild --platform android --clear"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "prebuildCommand": "npx expo prebuild --platform android --clear"
     },
     "production": {
-      "autoIncrement": true
+      "prebuildCommand": "npx expo prebuild --platform android --clear"
     }
   },
   "submit": {
