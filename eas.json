@@ -19,7 +19,6 @@
     "production": {
       "android": {
         "buildType": "app-bundle",
-        "versionCode": 5
       }
     }
   },

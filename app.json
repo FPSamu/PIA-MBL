@@ -23,7 +23,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.piaassistant.pia"
+      "package": "com.piaassistant.pia",
+      "versionCode": 5
     },
     "web": {
       "favicon": "./assets/favicon.png"
