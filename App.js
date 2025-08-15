@@ -47,8 +47,12 @@ export default function App() {
   
       const validSession = await ensureValidSession();
       if (validSession) {
-        // Cambio aquí: ir a subscription en lugar de dashboard
-        setCurrentScreen('subscription');
+        const customerInfo = await Purchases.getCustomerInfo();
+        if (customerInfo.entitlements.active && Object.keys(customerInfo.entitlements.active).length > 0) {
+          setCurrentScreen('dashboard');
+        } else {
+          setCurrentScreen('subscription');
+        }
       }
       setCheckingSession(false);
     };
