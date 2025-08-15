@@ -35,28 +35,93 @@ export default function App() {
   const [aboutAnswers, setAboutAnswers] = useState({ source: null, goal: null });
   const [dashboardRefresh, setDashboardRefresh] = useState(0);
 
+  const initializeRevenueCat = async () => {
+    try {
+      if (Platform.OS === 'ios') {
+        // Purchases.configure({apiKey: <revenuecat_project_apple_api_key>});
+      } else if (Platform.OS === 'android') {
+        Purchases.configure({apiKey: "goog_YMpixEdTzFYhVIkQJonwgKhSIIh"});
+      }
+      console.log('RevenueCat initialized successfully');
+      return true;
+    } catch (error) {
+      console.error('Error initializing RevenueCat:', error);
+      return false;
+    }
+  };
+
+  const checkSubscriptionStatus = async () => {
+    try {
+      const customerInfo = await Purchases.getCustomerInfo();
+      console.log('Customer info:', customerInfo);
+      
+      if (customerInfo.entitlements.active && Object.keys(customerInfo.entitlements.active).length > 0) {
+        console.log('✅ Usuario tiene suscripción activa');
+        return true;
+      } else {
+        console.log('❌ Usuario no tiene suscripción activa');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error checking subscription status:', error);
+      return false;
+    }
+  };
+
   useEffect(() => {
     const restoreSession = async () => {
-      const session = await getSession();
-      if (session && session.access_token && session.refresh_token) {
-        await supabase.auth.setSession({
-          access_token: session.access_token,
-          refresh_token: session.refresh_token,
-        });
-      }
-      initializeSessionListener();
-  
-      const validSession = await ensureValidSession();
-      if (validSession) {
-        const customerInfo = await Purchases.getCustomerInfo();
-        if (customerInfo.entitlements.active && Object.keys(customerInfo.entitlements.active).length > 0) {
-          setCurrentScreen('dashboard');
-        } else {
-          setCurrentScreen('subscription');
+      try {
+        console.log('🚀 Iniciando proceso de restauración de sesión...');
+        
+        // Paso 1: Restaurar sesión de Supabase
+        const session = await getSession();
+        if (session && session.access_token && session.refresh_token) {
+          await supabase.auth.setSession({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+          });
+          console.log('✅ Sesión de Supabase restaurada');
         }
+        
+        // Inicializar el listener de sesión
+        initializeSessionListener();
+        
+        // Paso 2: Verificar si la sesión es válida
+        const validSession = await ensureValidSession();
+        console.log('Valid session:', validSession);
+        
+        if (validSession) {
+          // Paso 3: Inicializar RevenueCat
+          const revenueCatInitialized = await initializeRevenueCat();
+          
+          if (revenueCatInitialized) {
+            // Paso 4: Verificar estado de suscripción
+            const hasActiveSubscription = await checkSubscriptionStatus();
+            
+            if (hasActiveSubscription) {
+              console.log('🎉 Usuario autenticado con suscripción activa -> Dashboard');
+              setCurrentScreen('dashboard');
+            } else {
+              console.log('💳 Usuario autenticado sin suscripción -> Subscription');
+              setCurrentScreen('subscription');
+            }
+          } else {
+            console.log('❌ Error inicializando RevenueCat -> Subscription');
+            setCurrentScreen('subscription');
+          }
+        } else {
+          console.log('🚪 No hay sesión válida -> GetStarted');
+          setCurrentScreen('getStarted');
+        }
+      } catch (error) {
+        console.error('❌ Error durante la restauración de sesión:', error);
+        setCurrentScreen('getStarted');
+      } finally {
+        setCheckingSession(false);
+        console.log('✅ Proceso de restauración completado');
       }
-      setCheckingSession(false);
     };
+    
     restoreSession();
   }, []);
 
@@ -81,6 +146,29 @@ export default function App() {
   const handleShowAddTransaction = () => setShowAddTransaction(true);
   const handleCloseAddTransaction = () => setShowAddTransaction(false);
 
+  const navigateAfterLogin = async () => {
+    try {
+      console.log('🔍 Verificando suscripción después del login...');
+      
+      // Inicializar RevenueCat si no está inicializado
+      await initializeRevenueCat();
+      
+      // Verificar estado de suscripción
+      const hasActiveSubscription = await checkSubscriptionStatus();
+      
+      if (hasActiveSubscription) {
+        console.log('✅ Login exitoso con suscripción -> Dashboard');
+        navigateToDashboard();
+      } else {
+        console.log('💳 Login exitoso sin suscripción -> Subscription');
+        navigateToSubscription();
+      }
+    } catch (error) {
+      console.error('❌ Error verificando suscripción después del login:', error);
+      navigateToSubscription();
+    }
+  };
+
   let content = null;
 
   if (checkingSession) {
@@ -104,7 +192,7 @@ export default function App() {
   }}
 />
   } else if (currentScreen === 'login') {
-    content = <LoginScreen onLogin={navigateToSubscription} onSwitchToSignup={navigateToFeatures} />;
+    content = <LoginScreen onLogin={navigateAfterLogin} onSwitchToSignup={navigateToFeatures} />;
   } else if (currentScreen === 'signup') {
     content = <SignupScreen onSignup={navigateToSubscription} onSwitchToLogin={navigateToLogin} onVerificationRequired={navigateToSplash} onboardingData={{ selectedFeature, selectedGoal, customGoal, customAmount, aboutAnswers }} />;
   } else if (currentScreen === 'splash') {

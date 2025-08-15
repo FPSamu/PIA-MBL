@@ -181,15 +181,28 @@ const SubscriptionScreen = ({ onSubscriptionSuccess }) => {
           [
             { 
               text: 'Continue', 
-              onPress: () => onSubscriptionSuccess?.()
+              onPress: () => {
+                console.log('🚀 Navegando al dashboard después de compra exitosa');
+                onSubscriptionSuccess?.();
+              }
             }
           ]
         );
       } else {
         console.log('⚠️ Compra completada pero sin entitlements activos');
-        Alert.alert('Purchase Complete', 'Your purchase was processed. It may take a moment to activate.');
-        // Still call success callback as purchase was completed
-        onSubscriptionSuccess?.();
+        Alert.alert(
+          'Purchase Complete', 
+          'Your purchase was processed. It may take a moment to activate.',
+          [
+            { 
+              text: 'Continue', 
+              onPress: () => {
+                console.log('🚀 Navegando al dashboard después de compra (sin entitlements inmediatos)');
+                onSubscriptionSuccess?.();
+              }
+            }
+          ]
+        );
       }
       
     } catch (error) {
@@ -197,7 +210,6 @@ const SubscriptionScreen = ({ onSubscriptionSuccess }) => {
       
       if (error.userCancelled) {
         console.log('🚫 Usuario canceló la compra');
-        // Don't show error for user cancellation
         return;
       }
       
