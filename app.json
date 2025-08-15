@@ -24,7 +24,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.piaassistant.pia",
-      "versionCode": 6
+      "versionCode": 7
     },
     "web": {
       "favicon": "./assets/favicon.png"
