@@ -34,6 +34,18 @@ export default function GoalsScreen({ onContinue, selectedGoal, setSelectedGoal,
     }
   };
 
+  const handleContinue = () => {
+    if (!canContinue) {
+      console.warn('Continue pressed but conditions not met');
+      return;
+    }
+    
+    try {
+      onContinue();
+    } catch (error) {
+      console.error('Error in onContinue:', error);
+    }
+  };
 
   const canContinue = Boolean(selectedGoal) || Boolean(customGoal.trim());
 
@@ -46,13 +58,12 @@ export default function GoalsScreen({ onContinue, selectedGoal, setSelectedGoal,
       />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 25}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <Goals onSelectGoal={handleSelectGoal} selectedGoal={selectedGoal} />
           <ManualGoal onChange={handleCustomGoalChange} disabled={!!selectedGoal} value={customGoal} amount={customAmount} />
-          <ContinueButton onPress={onContinue} disabled={!canContinue}>
+          <ContinueButton onPress={handleContinue} disabled={!canContinue}>
             Continue
           </ContinueButton>
         </ScrollView>

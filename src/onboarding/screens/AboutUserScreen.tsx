@@ -4,7 +4,7 @@ import Header from '../sections/Header';
 import AboutCard from '../components/AboutCard';
 import ContinueButton from '../components/ContinueButton';
 import ProgressBar from '../components/ProgressBar';
-import { Users, Smartphone, Globe, Store, HandCoins, ChartNoAxesCombined, Banknote, Star } from 'lucide-react-native';
+import { Users, Smartphone, Globe, Store, HandCoins, TrendingUp, Banknote, Star } from 'lucide-react-native';
 
 const questions = [
   {
@@ -22,19 +22,30 @@ const questions = [
     question: 'What is your main financial goal?',
     options: [
       { id: 'save', label: 'Save Money', icon: HandCoins },
-      { id: 'invest', label: 'Invest', icon: ChartNoAxesCombined },
+      { id: 'invest', label: 'Invest', icon: TrendingUp },
       { id: 'budget', label: 'Budgeting', icon: Banknote },
       { id: 'goals', label: 'Reach financial goals', icon: Star },
     ],
   }
 ];
 
-export default function AboutUserScreen({ onContinue, answers, setAnswers }: { onContinue: () => void; answers: { [key: string]: string | null }; setAnswers: (a: { [key: string]: string | null }) => void; }) {
+export default function AboutUserScreen({ 
+  onContinue, 
+  answers, 
+  setAnswers }: { 
+    onContinue: () => void; 
+    answers: { [key: string]: string | null }; 
+    setAnswers: (a: { [key: string]: string | null }) => void; 
+  }) {
   const handleSelect = (questionId: string, optionId: string) => {
-    setAnswers((prev: any) => ({ ...prev, [questionId]: optionId }));
+    const newAnswers = {
+      ...answers,
+      [questionId]: optionId
+    };
+    setAnswers(newAnswers);
   };
 
-  const canContinue = Object.values(answers).every((val) => !!val);
+  const canContinue = answers.source !== null && answers.goal !== null;
 
   return (
     <SafeAreaView style={styles.container}>

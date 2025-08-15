@@ -16,8 +16,9 @@ import Navbar from './src/navbar/Navbar';
 import AddTransactionScreen from './src/Transactions/addTransaction/AddTransactionScreen';
 import { supabase } from './src/onboarding/services/supabaseClient';
 import TransactionScreen from './src/Transactions/transactionsScreen/TransactionScreen';
-import InsightsScreen from './src/insights/Insights'
-import SettingsScreen from './src/settings/Settings'
+import InsightsScreen from './src/insights/Insights';
+import SettingsScreen from './src/settings/Settings';
+import Purchases from 'react-native-purchases';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -91,7 +92,17 @@ export default function App() {
   } else if (currentScreen === 'goals') {
     content = <GoalsScreen onContinue={navigateToAbout} selectedGoal={selectedGoal} setSelectedGoal={setSelectedGoal} customGoal={customGoal} setCustomGoal={setCustomGoal} customAmount={customAmount} setCustomAmount={setCustomAmount} />;
   } else if (currentScreen === 'about') {
-    content = <AboutUserScreen onContinue={navigateToSignup} answers={aboutAnswers} setAnswers={setAboutAnswers} />;
+    content = <AboutUserScreen 
+  onContinue={navigateToSignup} 
+  answers={aboutAnswers} 
+  setAnswers={(updater) => {
+    if (typeof updater === 'function') {
+      setAboutAnswers(prev => updater(prev));
+    } else {
+      setAboutAnswers(updater);
+    }
+  }}
+/>
   } else if (currentScreen === 'login') {
     content = <LoginScreen onLogin={navigateToSubscription} onSwitchToSignup={navigateToFeatures} />;
   } else if (currentScreen === 'signup') {
