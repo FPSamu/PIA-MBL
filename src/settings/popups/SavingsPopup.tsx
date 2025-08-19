@@ -83,7 +83,6 @@ export default function SavingsPopup({
                 Alert.alert("Error", "Failed to update savings information");
             } else {
                 onSavingsUpdated(savingsValue, newAccountTitle.trim());
-                Alert.alert("Success", "Savings information updated successfully!");
                 onClose();
             }
         } catch (error) {

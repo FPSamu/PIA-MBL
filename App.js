@@ -69,6 +69,9 @@ export default function App() {
 
         // Paso 2: Verificar si la sesión es válida
         const validSession = await ensureValidSession();
+        if (validSession) {
+          setCurrentScreen("dashboard");
+        }
         console.log("Valid session:", validSession);
       } catch (error) {
         console.error("❌ Error durante la restauración de sesión:", error);

@@ -83,7 +83,6 @@ export default function CreditPopup({
                 Alert.alert("Error", "Failed to update credit information");
             } else {
                 onCashUpdated(creditValue, newAccountTitle.trim());
-                Alert.alert("Success", "Credit information updated successfully!");
                 onClose();
             }
         } catch (error) {

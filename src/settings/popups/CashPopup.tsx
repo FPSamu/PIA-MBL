@@ -83,7 +83,6 @@ export default function CashPopup({
                 Alert.alert("Error", "Failed to update cash information");
             } else {
                 onCashUpdated(cashValue, newAccountTitle.trim());
-                Alert.alert("Success", "Cash information updated successfully!");
                 onClose();
             }
         } catch (error) {

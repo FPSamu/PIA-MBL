@@ -65,7 +65,6 @@ export default function SavingsGoalPopup({
         Alert.alert("Error", "Failed to update savings goal");
       } else {
         onGoalUpdated(goalValue);
-        Alert.alert("Success", "Savings goal updated successfully!");
         onClose();
       }
     } catch (error) {
