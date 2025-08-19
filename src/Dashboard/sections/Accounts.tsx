@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   title: {
     paddingHorizontal: 24,
     fontSize: 26,
-    fontWeight: 600,
+    fontWeight: '600',
     fontFamily: 'Inter_600SemiBold'
   }
 });

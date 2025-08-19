@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     marginTop: 24, 
     paddingHorizontal: 24,
     fontSize: 26,
-    fontWeight: 600,
+    fontWeight: '600',
     fontFamily: 'Inter_600SemiBold',
     color: '#1c1c1c'
   },

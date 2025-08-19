@@ -122,7 +122,11 @@ const styles = StyleSheet.create({
     padding: 18,
     marginVertical: 8,
     marginHorizontal: 8,
-    elevation: 2,
+    shadowColor: 'rgba(217,217,217,0.85)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 8,
   },
   iconCircle: {
     width: 54,

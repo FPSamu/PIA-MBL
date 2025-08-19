@@ -10,11 +10,11 @@ import { supabase } from '../onboarding/services/supabaseClient';
 import Transactions from './sections/Transactions';
 import Recommendations from './components/Recomendation';
 
-export default function Dashboard({ onLogout, refreshKey, onSeeAll }: { onLogout?: () => void, refreshKey?: number, onSeeAll?: () => void }) {
-  const [balance, setBalance] = useState<string | number>('Loading...');
+export default function Dashboard({ onLogout, refreshKey, onSeeAll }) {
+  const [balance, setBalance] = useState('Loading...');
   const [loading, setLoading] = useState(true);
-  const [income, setIncome] = useState<string | number>('Loading...');
-  const [expenses, setExpenses] = useState<string | number>('Loading...');
+  const [income, setIncome] = useState('Loading...');
+  const [expenses, setExpenses] = useState('Loading...');
 
   useEffect(() => {
     const fetchBalanceAndTransactions = async () => {
@@ -27,27 +27,34 @@ export default function Dashboard({ onLogout, refreshKey, onSeeAll }: { onLogout
         setLoading(false);
         return;
       }
+      
       // Fetch balance
       const { data: balanceData, error: balanceError } = await supabase
         .from('user_balance')
         .select('total_balance')
         .eq('uid', session.user.id)
         .single();
+        
       if (balanceError || !balanceData) {
         setBalance('N/A');
       } else {
-        setBalance(balanceData.total_balance ?? 0);
+        // Convertir a string formateado desde el inicio
+        const balanceAmount = balanceData.total_balance ?? 0;
+        setBalance(`$${Number(balanceAmount).toLocaleString()}`);
       }
+      
       // Fetch transactions for the last month
       const now = new Date();
       const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
       // Format as YYYY-MM-DD for Supabase
       const lastMonthStr = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}-${String(lastMonth.getDate()).padStart(2, '0')}`;
+      
       const { data: transactions, error: txError } = await supabase
         .from('transactions')
         .select('amount, type, date')
         .eq('uid', session.user.id)
         .gte('date', lastMonthStr);
+        
       if (txError || !transactions) {
         setIncome('N/A');
         setExpenses('N/A');
@@ -66,6 +73,7 @@ export default function Dashboard({ onLogout, refreshKey, onSeeAll }: { onLogout
       }
       setLoading(false);
     };
+    
     fetchBalanceAndTransactions();
   }, [refreshKey]);
 
@@ -74,7 +82,11 @@ export default function Dashboard({ onLogout, refreshKey, onSeeAll }: { onLogout
       <StatusBar style="dark" backgroundColor="#000" />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <DashboardHeader />
-        <Balance total={loading ? 'Loading...' : '$' + balance} income={income} expenses={expenses} />
+        <Balance 
+          total={loading ? 'Loading...' : balance} 
+          income={income} 
+          expenses={expenses} 
+        />
         <Recommendations />
         <Accounts refreshKey={refreshKey} />
         <Transactions refreshKey={refreshKey} onSeeAll={onSeeAll} />

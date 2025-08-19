@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: Platform.OS === 'ios' ? 24 : 36,
+    bottom: Platform.OS === 'ios' ? 24 : 8,
     alignItems: 'center',
     zIndex: 100,
     pointerEvents: 'box-none',
